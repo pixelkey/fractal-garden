@@ -2,9 +2,16 @@
     "species": "Rosa",
     "common_name": "Garden Rose",
     "growth_characteristics": {
-        "max_height": 0.3,  
+        "max_height": 0.3,
         "growth_rate": 2.0,
-        "lifespan": 1500
+        "lifespan": 1500,
+        "flowering": {
+            "min_maturity": 0.2,
+            "chance": 1.0,
+            "min_delay": 10,
+            "max_delay": 50,
+            "bloom_duration": 400
+        }
     },
     "environmental_requirements": {
         "optimal_water": [60, 80],

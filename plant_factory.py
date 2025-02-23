@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional
 import pygame
 import random
@@ -10,6 +10,21 @@ from stem import StemProperties, StemAppearance, StemSystem, Branch, StemSystemD
 from leaf import LeafShape, LeafColor, LeafGenerator
 from flower import PetalShape, FlowerStructure, FlowerColors, FlowerGenerator
 from environment import GrowthRequirements, EnvironmentSystem, EnvironmentalFactors, GrowthCharacteristics
+
+@dataclass
+class FloweringCharacteristics:
+    min_maturity: float = 0.7
+    chance: float = 0.8
+    min_delay: int = 100
+    max_delay: int = 500
+    bloom_duration: int = 800
+
+@dataclass
+class GrowthCharacteristics:
+    max_height: float
+    growth_rate: float
+    lifespan: int
+    flowering: FloweringCharacteristics = field(default_factory=FloweringCharacteristics)
 
 @dataclass
 class PlantDefinition:
@@ -45,8 +60,8 @@ class Plant:
         self.environment_system = EnvironmentSystem(definition.environmental_requirements,
                                                   definition.growth_characteristics)
         
-        # Store flower sizes for each branch to prevent flickering
-        self.flower_sizes = {}  # Dictionary to store flower sizes by branch ID
+        # Store flower data for each branch
+        self.flower_data = {}  # Dictionary to store flower info by branch ID
         
     def update(self, environment: EnvironmentalFactors) -> None:
         """Update plant state based on environmental conditions"""
@@ -171,22 +186,133 @@ class Plant:
         for child in branch.children:
             self._draw_leaves_on_branch(screen, child)
             
+    def _should_flower(self, branch: Branch) -> bool:
+        """Determine if a branch should have a flower"""
+        branch_id = id(branch)
+        
+        # Only consider branches that are fully grown
+        if branch.growth < 0.95:  # Increased from 0.5 to ensure stem is mature
+            return False
+            
+        # Only start flowering when plant is mature enough
+        if self.growth_stage < self.definition.growth_characteristics.flowering.min_maturity:
+            print(f"Plant not mature enough: {self.growth_stage} < {self.definition.growth_characteristics.flowering.min_maturity}")
+            return False
+            
+        # If branch hasn't been evaluated for flowering, initialize its data
+        if branch_id not in self.flower_data:
+            flowering = self.definition.growth_characteristics.flowering
+            should_flower = random.random() < flowering.chance
+            print(f"New branch {branch_id} evaluated for flowering: {should_flower}")
+            self.flower_data[branch_id] = {
+                'should_flower': should_flower,
+                'flower_time': self.age + random.randint(flowering.min_delay, flowering.max_delay),
+                'bloom_end': None,  # Will be set when flower is fully bloomed
+                'size': self.stem_system.properties.thickness * 7.5 * (0.8 + 0.4 * random.random()),
+                'stage': 'bud',  # Stages: 'bud', 'opening', 'bloomed', 'withering'
+                'stage_progress': 0.0,  # Progress through current stage (0.0 to 1.0)
+                'bud_start': None  # Will be set when bud appears
+            }
+            
+        data = self.flower_data[branch_id]
+        
+        # If this branch is meant to flower and it's time
+        if data['should_flower'] and self.age >= data['flower_time']:
+            # Initialize bud if not started
+            if data['bud_start'] is None:
+                print(f"Branch {branch_id} starting bud")
+                data['bud_start'] = self.age
+                data['stage'] = 'bud'
+                data['stage_progress'] = 0.0
+                
+            # Calculate time in current stage
+            time_in_stage = self.age - data['bud_start']
+            
+            # Update flower stages
+            if data['stage'] == 'bud':
+                # Bud takes 100 frames to develop
+                data['stage_progress'] = min(1.0, time_in_stage / 100)
+                if data['stage_progress'] >= 1.0:
+                    print(f"Branch {branch_id} bud opening")
+                    data['stage'] = 'opening'
+                    data['stage_progress'] = 0.0
+                    data['bud_start'] = self.age
+                    
+            elif data['stage'] == 'opening':
+                # Opening takes 150 frames
+                data['stage_progress'] = min(1.0, time_in_stage / 150)
+                if data['stage_progress'] >= 1.0:
+                    print(f"Branch {branch_id} fully bloomed")
+                    data['stage'] = 'bloomed'
+                    data['stage_progress'] = 0.0
+                    data['bud_start'] = self.age
+                    data['bloom_end'] = self.age + self.definition.growth_characteristics.flowering.bloom_duration
+                    
+            elif data['stage'] == 'bloomed':
+                # Check if it's time to start withering
+                if self.age > data['bloom_end']:
+                    print(f"Branch {branch_id} starting to wither")
+                    data['stage'] = 'withering'
+                    data['stage_progress'] = 0.0
+                    data['bud_start'] = self.age
+                    
+            elif data['stage'] == 'withering':
+                # Withering takes 100 frames
+                data['stage_progress'] = min(1.0, time_in_stage / 100)
+                if data['stage_progress'] >= 1.0:
+                    print(f"Branch {branch_id} finished withering")
+                    # 30% chance to start a new flower cycle
+                    if random.random() < 0.3:
+                        data['flower_time'] = self.age + random.randint(300, 600)
+                        data['bud_start'] = None
+                    return False
+            
+            print(f"Branch {branch_id} in stage {data['stage']} progress {data['stage_progress']:.2f}")
+            return True
+            
+        return False
+        
     def _draw_flowers(self, screen: pygame.Surface) -> None:
         """Draw flowers on branch tips"""
         def draw_flower_on_branch(branch: Branch):
-            # Draw flowers on branch tips that are grown enough
-            if branch.growth > 0.5:  # Lower threshold for flowers
-                # Get or generate flower size for this branch
-                branch_id = id(branch)
-                if branch_id not in self.flower_sizes:
-                    # Base flower size is proportional to branch thickness
-                    base_size = self.stem_system.properties.thickness * 7.5  # Scale based on stem thickness
-                    self.flower_sizes[branch_id] = base_size * (0.8 + 0.4 * random.random())
-                
+            # Check if branch should have a flower
+            if self._should_flower(branch):
                 # Draw flower at branch tip
                 flower_pos = branch.end_pos
-                flower_size = self.flower_sizes[branch_id] * self.growth_stage
-                self.flower_generator.draw(screen, flower_pos, flower_size, branch.angle)
+                data = self.flower_data[id(branch)]
+                
+                # Calculate flower size based on stage
+                if data['stage'] == 'bud':
+                    # Buds are small and grow slightly
+                    size = data['size'] * 0.3 * (0.8 + 0.2 * data['stage_progress'])
+                elif data['stage'] == 'opening':
+                    # Flower grows from 30% to full size while opening
+                    size = data['size'] * (0.3 + 0.7 * data['stage_progress'])
+                elif data['stage'] == 'bloomed':
+                    # Full size when bloomed
+                    size = data['size']
+                else:  # withering
+                    # Slightly shrink while withering
+                    size = data['size'] * (1.0 - 0.2 * data['stage_progress'])
+                    
+                size *= self.growth_stage  # Apply overall plant growth
+                
+                # Draw with stage-specific modifications
+                if data['stage'] == 'bud':
+                    # Draw a simple green circle for bud
+                    pygame.draw.circle(screen, (34, 139, 34),
+                                    (int(flower_pos[0]), int(flower_pos[1])),
+                                    int(size * 0.5))
+                else:
+                    # Draw flower with stage-specific alpha
+                    alpha = 255
+                    if data['stage'] == 'opening':
+                        alpha = int(128 + 127 * data['stage_progress'])
+                    elif data['stage'] == 'withering':
+                        alpha = int(255 * (1.0 - data['stage_progress']))
+                    
+                    self.flower_generator.draw(screen, flower_pos, size, branch.angle,
+                                            alpha=alpha)
                 
             # Recursively draw on child branches
             for child in branch.children:
@@ -195,9 +321,9 @@ class Plant:
         # Draw flowers starting from main stem
         draw_flower_on_branch(self.stem_system.main_stem)
         
-    def reset_flower_sizes(self) -> None:
-        """Reset flower sizes when plant is pruned or branches change"""
-        self.flower_sizes.clear()
+    def reset_flower_data(self) -> None:
+        """Reset flower data when plant is pruned or branches change"""
+        self.flower_data.clear()
         
     def is_dead(self) -> bool:
         """Check if plant should be removed"""
@@ -218,7 +344,14 @@ class PlantFactory:
             growth_chars = GrowthCharacteristics(
                 max_height=data['growth_characteristics']['max_height'],
                 growth_rate=data['growth_characteristics']['growth_rate'],
-                lifespan=data['growth_characteristics']['lifespan']
+                lifespan=data['growth_characteristics']['lifespan'],
+                flowering=FloweringCharacteristics(
+                    min_maturity=data['growth_characteristics']['flowering']['min_maturity'],
+                    chance=data['growth_characteristics']['flowering']['chance'],
+                    min_delay=data['growth_characteristics']['flowering']['min_delay'],
+                    max_delay=data['growth_characteristics']['flowering']['max_delay'],
+                    bloom_duration=data['growth_characteristics']['flowering']['bloom_duration']
+                )
             )
             
             # Create environmental requirements

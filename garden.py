@@ -12,15 +12,15 @@ class Garden:
         
         # Get the screen info
         screen_info = pygame.display.Info()
-        self.width = screen_info.current_w
-        self.height = screen_info.current_h
+        self.width = int(screen_info.current_w * 1.5)
+        self.height = int(screen_info.current_h * 1.5)
         
         # Calculate scaling factors for plants based on screen size
         # Use the smaller dimension to maintain proportions
         self.scale_factor = min(self.width, self.height) / 1000.0  # Base size of 1000 pixels
         
-        # Create the window
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        # Create the window - use resizable flag to handle large dimensions
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption("Fractal Garden")
         
         # Initialize clock

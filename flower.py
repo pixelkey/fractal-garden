@@ -34,54 +34,71 @@ class FlowerGenerator:
         self.structure = structure
         self.colors = colors
         
-    def draw(self, surface: pygame.Surface, pos: Tuple[float, float], size: float, angle: float) -> None:
+    def draw(self, surface: pygame.Surface, pos: Tuple[float, float],
+             size: float, angle: float, alpha: int = 255) -> None:
         """Draw a flower on the surface"""
+        # Create a temporary surface for the flower
+        temp_surface = pygame.Surface((size * 3, size * 3), pygame.SRCALPHA)
+        temp_surface.fill((0, 0, 0, 0))  # Transparent background
+        
+        # Calculate center of temp surface
+        center = (temp_surface.get_width() // 2, temp_surface.get_height() // 2)
+        
         # Draw petals in layers, from back to front
         for layer in range(self.structure.petal_layers - 1, -1, -1):
             layer_size = size * (1 - 0.15 * layer)  # Layers closer in size
             layer_angle_offset = layer * math.pi / (self.structure.petal_layers * 2)
-            self._draw_petal_layer(surface, pos, layer_size, angle + layer_angle_offset, layer)
+            self._draw_petal_layer(temp_surface, center, layer_size,
+                                 angle + layer_angle_offset, layer, alpha)
             
         # Draw center
         center_size = size * self.structure.center_size_ratio
         # Draw a larger dark center first for depth
-        pygame.draw.circle(surface, (0, 0, 0),
-                         (int(pos[0]), int(pos[1])), int(center_size * 1.2))
+        pygame.draw.circle(temp_surface, (0, 0, 0, alpha),
+                         center, int(center_size * 1.2))
         # Draw the actual center
-        pygame.draw.circle(surface, self.colors.center_color,
-                         (int(pos[0]), int(pos[1])), int(center_size))
+        center_color = self.colors.center_color + (alpha,)
+        pygame.draw.circle(temp_surface, center_color,
+                         center, int(center_size))
                          
-    def _draw_petal_layer(self, surface: pygame.Surface, pos: Tuple[float, float],
-                         size: float, base_angle: float, layer: int) -> None:
+        # Draw temp surface onto main surface
+        surface.blit(temp_surface,
+                    (pos[0] - center[0], pos[1] - center[1]))
+        
+    def _draw_petal_layer(self, surface: pygame.Surface,
+                         center: Tuple[int, int],
+                         size: float, base_angle: float,
+                         layer: int, alpha: int) -> None:
         """Draw a layer of petals"""
         num_petals = self.structure.num_petals
-        petal_color = self._get_petal_color(layer)
+        petal_color = self._get_petal_color(layer, alpha)
         
         for i in range(num_petals):
             # Calculate petal angle
             angle = base_angle + (2 * math.pi * i / num_petals)
             
             # Generate petal points
-            points = self._generate_petal_points(pos, size, angle)
+            points = self._generate_petal_points(center, size, angle)
             
             # Draw petal
             if len(points) > 2:
                 pygame.draw.polygon(surface, petal_color, points)
                 # Draw petal outline
-                pygame.draw.polygon(surface, (0, 0, 0), points, max(1, int(size/20)))
+                pygame.draw.polygon(surface, (0, 0, 0, alpha), points, max(1, int(size/20)))
                 
-    def _get_petal_color(self, layer: int) -> Tuple[int, int, int]:
+    def _get_petal_color(self, layer: int, alpha: int) -> Tuple[int, int, int, int]:
         """Get color for petal with variation"""
         base_color = self.colors.petal_colors[layer % len(self.colors.petal_colors)]
         if not self.colors.color_variation:
-            return base_color
+            return base_color + (alpha,)
             
         r, g, b = base_color
         var = self.colors.color_variation
         return (
             max(0, min(255, r + random.randint(-var, var))),
             max(0, min(255, g + random.randint(-var, var))),
-            max(0, min(255, b + random.randint(-var, var)))
+            max(0, min(255, b + random.randint(-var, var))),
+            alpha
         )
         
     def _generate_petal_points(self, pos: Tuple[float, float],
