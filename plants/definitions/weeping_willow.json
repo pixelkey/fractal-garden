@@ -1,0 +1,27 @@
+{
+    "name": "Weeping Willow",
+    "scientific_name": "Salix babylonica",
+    "type": "tree",
+    "growth_rate": 0.4,
+    "max_size": 800,
+    "branching_angle_range": [-1.2, 1.2],
+    "branch_length_range": [200, 500],
+    "max_branches": 25,
+    "color": {
+        "stem": [101, 67, 33],
+        "leaf": [130, 180, 70]
+    },
+    "leaf_size": 8,
+    "leaf_density": 0.7,
+    "optimal_conditions": {
+        "water": [70, 90],
+        "light": [60, 90],
+        "temperature": [15, 30],
+        "humidity": [50, 80]
+    },
+    "stress_tolerance": {
+        "water": 0.6,
+        "light": 0.7,
+        "temperature": 0.6
+    }
+}

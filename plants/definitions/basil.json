@@ -1,0 +1,27 @@
+{
+    "name": "Sweet Basil",
+    "scientific_name": "Ocimum basilicum",
+    "type": "herb",
+    "growth_rate": 0.8,
+    "max_size": 70,
+    "branching_angle_range": [-0.5, 0.5],
+    "branch_length_range": [25, 60],
+    "max_branches": 18,
+    "color": {
+        "stem": [80, 120, 80],
+        "leaf": [50, 150, 50]
+    },
+    "leaf_size": 7,
+    "leaf_density": 0.7,
+    "optimal_conditions": {
+        "water": [60, 80],
+        "light": [70, 90],
+        "temperature": [20, 30],
+        "humidity": [50, 70]
+    },
+    "stress_tolerance": {
+        "water": 0.6,
+        "light": 0.7,
+        "temperature": 0.6
+    }
+}

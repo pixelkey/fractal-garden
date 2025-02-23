@@ -63,6 +63,9 @@ class Garden:
         self.clouds = []
         self.max_clouds = 10
         self.cloud_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.wind_speed = 0.0
+        self.target_wind_speed = 0.0
+        self.wind_change_timer = 0
         
         # Background colors for different times of day
         self.sky_colors = {
@@ -155,6 +158,23 @@ class Garden:
         self.weather_duration -= 1
         if self.weather_duration <= 0:
             self._change_weather()
+        
+        # Update wind
+        self.wind_change_timer -= 1
+        if self.wind_change_timer <= 0:
+            # Set new target wind speed based on weather
+            if self.current_weather == 'clear':
+                self.target_wind_speed = random.uniform(0.2, 1.0)
+            elif self.current_weather == 'cloudy':
+                self.target_wind_speed = random.uniform(0.5, 1.5)
+            elif self.current_weather == 'rain':
+                self.target_wind_speed = random.uniform(1.0, 2.0)
+            else:  # storm
+                self.target_wind_speed = random.uniform(2.0, 3.0)
+            self.wind_change_timer = random.randint(200, 400)
+        
+        # Smoothly interpolate wind speed
+        self.wind_speed += (self.target_wind_speed - self.wind_speed) * 0.01
         
         # Calculate base light level based on time of day
         if day_progress < 0.2:  # Dawn
@@ -313,18 +333,23 @@ class Garden:
         """Draw weather statistics in the top-left corner"""
         # Get time of day
         day_progress = self.current_time / self.day_length
-        if day_progress < 0.2:
+        
+        # Convert progress to hours and minutes (24-hour format)
+        hours = int(24 * day_progress)
+        minutes = int(60 * (24 * day_progress - hours))
+        
+        if day_progress < 0.2:  # Dawn (4:00 - 8:48)
             time_of_day = "Dawn"
-        elif day_progress < 0.8:
+        elif day_progress < 0.8:  # Day (8:48 - 19:12)
             time_of_day = "Day"
-        elif day_progress < 0.9:
+        elif day_progress < 0.9:  # Dusk (19:12 - 21:36)
             time_of_day = "Dusk"
-        else:
+        else:  # Night (21:36 - 4:00)
             time_of_day = "Night"
             
         # Format weather info
         weather_info = {
-            'Time': time_of_day,
+            'Time': f"{time_of_day} ({hours:02d}:{minutes:02d})",
             'Weather': self.current_weather.title(),
             'Light': f"{self.environment.light_level:.1f}%",
             'Water': f"{self.environment.water_level:.1f}%",
@@ -362,34 +387,56 @@ class Garden:
     def _draw_clouds(self) -> None:
         """Draw cloud cover based on weather"""
         # Only update cloud positions periodically
-        if self.frame_count % 10 == 0:
+        if self.frame_count % 2 == 0:  # Update more frequently
             self.cloud_surface.fill((0, 0, 0, 0))
             
             # Create new clouds if needed
             while len(self.clouds) < self.max_clouds:
                 cloud = {
-                    'x': random.randint(0, self.width),
+                    'x': random.randint(-100, self.width),
                     'y': random.randint(0, self.height // 3),
-                    'size': random.randint(50, 150),
-                    'speed': random.uniform(0.2, 0.5)
+                    'size': random.randint(100, 250),  # Larger clouds
+                    'speed': random.uniform(0.8, 1.2),  # Base speed multiplier
+                    'height_offset': random.uniform(-5, 5)  # Vertical movement
                 }
                 self.clouds.append(cloud)
             
             # Update and draw clouds
             new_clouds = []
             for cloud in self.clouds:
-                # Move cloud
-                cloud['x'] += cloud['speed']
+                # Move cloud based on wind speed and cloud's own properties
+                movement = self.wind_speed * cloud['speed']
+                cloud['x'] += movement
+                
+                # Add slight vertical movement
+                cloud['y'] += math.sin(self.frame_count * 0.02) * 0.2 + cloud['height_offset'] * 0.1
+                
+                # Keep y position within bounds
+                cloud['y'] = max(0, min(self.height // 3, cloud['y']))
+                
+                # Wrap around when off screen
                 if cloud['x'] - cloud['size'] > self.width:
                     cloud['x'] = -cloud['size']
+                    cloud['y'] = random.randint(0, self.height // 3)
+                    cloud['height_offset'] = random.uniform(-5, 5)
                 
                 # Draw cloud as a group of circles
                 alpha = 100 if self.current_weather == 'cloudy' else 150
+                if self.current_weather == 'storm':
+                    alpha = 200
+                
+                # Draw main cloud body
                 for i in range(5):  # Draw multiple overlapping circles for each cloud
                     offset_x = int(cloud['x'] + i * cloud['size'] * 0.2)
-                    offset_y = int(cloud['y'] + math.sin(i) * 10)
+                    offset_y = int(cloud['y'] + math.sin(i + self.frame_count * 0.02) * 10)
                     pygame.draw.circle(self.cloud_surface, (200, 200, 200, alpha),
                                     (offset_x, offset_y), int(cloud['size'] * 0.5))
+                    
+                    # Add darker bottom for storm clouds
+                    if self.current_weather == 'storm':
+                        pygame.draw.circle(self.cloud_surface, (100, 100, 100, 100),
+                                        (offset_x, offset_y + cloud['size'] * 0.3),
+                                        int(cloud['size'] * 0.4))
                 
                 new_clouds.append(cloud)
             

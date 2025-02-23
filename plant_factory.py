@@ -36,11 +36,13 @@ class PlantDefinition:
     stem_system: StemSystemDefinition
     leaf_generator: LeafGenerator
     flower_generator: FlowerGenerator
+    type: str = 'flower'  # Added plant type field
 
 class Plant:
     """A single instance of a plant"""
     
-    def __init__(self, definition: PlantDefinition, x: float, y: float):
+    def __init__(self, definition: PlantDefinition, x: float, y: float, scale_factor: float = 1.0):
+        """Initialize a new plant"""
         self.definition = definition
         self.x = x
         self.y = y
@@ -51,6 +53,21 @@ class Plant:
         self.is_withering = False
         self.wither_time = 0
         self.max_wither_time = 300  # Takes 300 frames to fully wither
+        
+        # Apply type-based scaling
+        type_scale_factors = {
+            'tree': 2.5,
+            'grass': 0.7,
+            'ground_cover': 0.4,
+            'herb': 0.6,
+            'shrub': 1.0,
+            'flower': 1.0
+        }
+        plant_type = definition.type
+        type_scale = type_scale_factors.get(plant_type, 1.0)
+        
+        # Apply combined scaling
+        self.scale_factor = scale_factor * type_scale
         
         # Initialize components
         self.stem_system = StemSystem(definition.stem_system.properties,
@@ -494,7 +511,8 @@ class PlantFactory:
                 environmental_requirements=env_reqs,
                 stem_system=stem_system,
                 leaf_generator=leaf_generator,
-                flower_generator=flower_generator
+                flower_generator=flower_generator,
+                type=data.get('type', 'flower')  # Added plant type
             )
             
             return definition
@@ -504,9 +522,9 @@ class PlantFactory:
             return None
             
     @staticmethod
-    def create_plant(definition: PlantDefinition, x: float, y: float) -> 'Plant':
+    def create_plant(definition: PlantDefinition, x: float, y: float, scale_factor: float = 1.0) -> 'Plant':
         """Create a new plant instance from a definition"""
-        plant = Plant(definition, x, y)
+        plant = Plant(definition, x, y, scale_factor)
         # Create stem system from definition
         plant.stem_system = StemSystem(definition.stem_system.properties,
                                      definition.stem_system.appearance)

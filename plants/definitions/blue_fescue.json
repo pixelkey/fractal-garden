@@ -1,0 +1,27 @@
+{
+    "name": "Blue Fescue",
+    "scientific_name": "Festuca glauca",
+    "type": "grass",
+    "growth_rate": 0.7,
+    "max_size": 40,
+    "branching_angle_range": [-0.2, 0.2],
+    "branch_length_range": [20, 50],
+    "max_branches": 25,
+    "color": {
+        "stem": [100, 140, 160],
+        "leaf": [120, 160, 180]
+    },
+    "leaf_size": 3,
+    "leaf_density": 0.8,
+    "optimal_conditions": {
+        "water": [40, 70],
+        "light": [80, 100],
+        "temperature": [15, 30],
+        "humidity": [30, 60]
+    },
+    "stress_tolerance": {
+        "water": 0.9,
+        "light": 0.8,
+        "temperature": 0.8
+    }
+}

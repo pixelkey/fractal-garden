@@ -1,0 +1,27 @@
+{
+    "name": "Greek Oregano",
+    "scientific_name": "Origanum vulgare hirtum",
+    "type": "herb",
+    "growth_rate": 0.7,
+    "max_size": 50,
+    "branching_angle_range": [-0.45, 0.45],
+    "branch_length_range": [20, 45],
+    "max_branches": 20,
+    "color": {
+        "stem": [90, 110, 80],
+        "leaf": [80, 120, 70]
+    },
+    "leaf_size": 4,
+    "leaf_density": 0.85,
+    "optimal_conditions": {
+        "water": [40, 60],
+        "light": [70, 100],
+        "temperature": [15, 30],
+        "humidity": [40, 60]
+    },
+    "stress_tolerance": {
+        "water": 0.8,
+        "light": 0.8,
+        "temperature": 0.7
+    }
+}

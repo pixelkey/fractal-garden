@@ -1,0 +1,27 @@
+{
+    "name": "Irish Moss",
+    "scientific_name": "Sagina subulata",
+    "type": "ground_cover",
+    "growth_rate": 0.8,
+    "max_size": 10,
+    "branching_angle_range": [-0.2, 0.2],
+    "branch_length_range": [5, 15],
+    "max_branches": 30,
+    "color": {
+        "stem": [30, 80, 30],
+        "leaf": [50, 120, 50]
+    },
+    "leaf_size": 3,
+    "leaf_density": 0.9,
+    "optimal_conditions": {
+        "water": [60, 90],
+        "light": [40, 80],
+        "temperature": [10, 25],
+        "humidity": [60, 90]
+    },
+    "stress_tolerance": {
+        "water": 0.7,
+        "light": 0.6,
+        "temperature": 0.5
+    }
+}

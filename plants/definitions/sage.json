@@ -1,0 +1,27 @@
+{
+    "name": "Common Sage",
+    "scientific_name": "Salvia officinalis",
+    "type": "herb",
+    "growth_rate": 0.6,
+    "max_size": 80,
+    "branching_angle_range": [-0.6, 0.6],
+    "branch_length_range": [30, 70],
+    "max_branches": 15,
+    "color": {
+        "stem": [100, 120, 90],
+        "leaf": [110, 130, 110]
+    },
+    "leaf_size": 6,
+    "leaf_density": 0.8,
+    "optimal_conditions": {
+        "water": [40, 60],
+        "light": [70, 100],
+        "temperature": [15, 30],
+        "humidity": [40, 60]
+    },
+    "stress_tolerance": {
+        "water": 0.8,
+        "light": 0.7,
+        "temperature": 0.7
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "name": "Silver Birch",
+    "scientific_name": "Betula pendula",
+    "type": "tree",
+    "growth_rate": 0.5,
+    "max_size": 700,
+    "branching_angle_range": [-0.8, 0.8],
+    "branch_length_range": [150, 400],
+    "max_branches": 20,
+    "color": {
+        "stem": [220, 220, 220],
+        "leaf": [120, 170, 60]
+    },
+    "leaf_size": 6,
+    "leaf_density": 0.6,
+    "optimal_conditions": {
+        "water": [50, 80],
+        "light": [70, 100],
+        "temperature": [10, 25],
+        "humidity": [40, 70]
+    },
+    "stress_tolerance": {
+        "water": 0.7,
+        "light": 0.8,
+        "temperature": 0.7
+    }
+}
