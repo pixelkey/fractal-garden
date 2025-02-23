@@ -4,6 +4,7 @@ import os
 from typing import List, Dict, Any
 from plant_factory import PlantFactory, Plant
 from environment import EnvironmentalFactors
+from celestial import Sun, Moon, Star
 import math
 
 class Garden:
@@ -51,13 +52,10 @@ class Garden:
         self.weather_transition = 0.0  # For smooth transitions
         
         # Rain system optimization
-        self.rain_center = (random.randint(0, self.width), 0)
-        self.rain_target = (random.randint(0, self.width), 0)
-        self.rain_move_timer = 0
-        self.rain_intensity = 0.0
-        self.rain_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.rain_drops = []
+        self.rain_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.rain_update_counter = 0
+        self.drops_per_cloud = 15  # Number of drops to generate per cloud
         
         # Cloud system
         self.clouds = []
@@ -67,12 +65,25 @@ class Garden:
         self.target_wind_speed = 0.0
         self.wind_change_timer = 0
         
+        # Celestial objects
+        self.sun = Sun(self.width / 2, self.height / 2)
+        self.moon = Moon(self.width / 2, self.height / 2)
+        self.stars = [Star(random.randint(0, self.width), 
+                         random.randint(0, int(self.height * 0.6)))
+                     for _ in range(50)]
+        
         # Background colors for different times of day
         self.sky_colors = {
-            'dawn': (255, 200, 150),
+            'night': (10, 20, 40),
+            'pre_dawn': (40, 40, 60),
+            'dawn': (255, 150, 100),
+            'sunrise': (255, 200, 150),
+            'morning': (180, 220, 255),
             'day': (135, 206, 235),
-            'dusk': (255, 150, 100),
-            'night': (10, 20, 30)
+            'afternoon': (160, 210, 245),
+            'sunset': (255, 170, 120),
+            'dusk': (150, 120, 180),
+            'post_dusk': (60, 70, 100)
         }
         self.current_sky_color = self.sky_colors['day']
         self.bg_color = self.current_sky_color  # Initialize bg_color
@@ -95,6 +106,18 @@ class Garden:
         self._stats_surfaces = {}
         self._last_stats = {}
         
+        # Hills configuration
+        self.hills = []
+        num_hills = 5
+        for i in range(num_hills):
+            hill = {
+                'center_x': self.width * (i / (num_hills - 1)),
+                'height': random.uniform(0.2, 0.35) * self.height,
+                'width': random.uniform(1.2, 1.5) * (self.width / (num_hills - 1)),
+                'color': (30, 70, 30)  # Dark green
+            }
+            self.hills.append(hill)
+            
     def _load_plant_definitions(self) -> Dict[str, Any]:
         """Load all plant definitions from the definitions directory"""
         definitions = {}
@@ -180,14 +203,14 @@ class Garden:
         if day_progress < 0.2:  # Dawn
             phase_progress = day_progress / 0.2
             self.environment.light_level = 20 + 60 * phase_progress
-            self._blend_sky_color('dawn', phase_progress)
+            self._blend_sky_color(day_progress)
         elif day_progress < 0.8:  # Day
             self.environment.light_level = 80
-            self._blend_sky_color('day', 1.0)
+            self._blend_sky_color(day_progress)
         elif day_progress < 1.0:  # Dusk to night
             phase_progress = (day_progress - 0.8) / 0.2
             self.environment.light_level = 80 - 60 * phase_progress
-            self._blend_sky_color('dusk' if phase_progress < 0.5 else 'night', phase_progress)
+            self._blend_sky_color(day_progress)
         
         # Apply weather effects
         if self.current_weather == 'cloudy':
@@ -196,25 +219,14 @@ class Garden:
         elif self.current_weather == 'rain':
             self.environment.light_level *= 0.5
             self.environment.humidity += 0.3
-            self.environment.water_level = min(100, self.environment.water_level + self.rain_intensity * 0.2)
+            self.environment.water_level = min(100, self.environment.water_level + 0.2)
         elif self.current_weather == 'storm':
             self.environment.light_level *= 0.3
             self.environment.humidity += 0.5
-            self.environment.water_level = min(100, self.environment.water_level + self.rain_intensity * 0.4)
+            self.environment.water_level = min(100, self.environment.water_level + 0.4)
         else:  # clear
             self.environment.water_level = max(0, self.environment.water_level - 0.1)
             
-        # Update rain position if raining
-        if self.current_weather in ['rain', 'storm']:
-            self.rain_move_timer += 1
-            if self.rain_move_timer > 100:
-                self.rain_target = (random.randint(0, self.width), 0)
-                self.rain_move_timer = 0
-                
-            # Interpolate rain position
-            dx = (self.rain_target[0] - self.rain_center[0]) * 0.02
-            self.rain_center = (self.rain_center[0] + dx, 0)
-        
     def _change_weather(self) -> None:
         """Change the weather state"""
         # Clear weather is more common
@@ -222,30 +234,76 @@ class Garden:
         self.current_weather = random.choices(self.weather_states, weights=weights)[0]
         
         # Set weather duration
-        self.weather_duration = random.randint(self.min_weather_duration, self.min_weather_duration * 2)
+        self.weather_duration = random.randint(300, 600)
         
-        # Set rain intensity based on weather
-        if self.current_weather == 'rain':
-            self.rain_intensity = random.uniform(0.3, 0.6)
-        elif self.current_weather == 'storm':
-            self.rain_intensity = random.uniform(0.7, 1.0)
-        else:
-            self.rain_intensity = 0.0
-            
-    def _blend_sky_color(self, target_time: str, progress: float) -> None:
-        """Blend sky colors for smooth transitions"""
-        target_color = self.sky_colors[target_time]
-        current_color = self.current_sky_color
-        
-        # Smoothly interpolate colors
-        self.current_sky_color = tuple(
-            int(current + (target - current) * progress)
-            for current, target in zip(current_color, target_color)
-        )
-        
-        # Update background color
-        self.bg_color = self.current_sky_color
-        
+    def _blend_sky_color(self, time_of_day: float) -> None:
+        """Update sky color based on time of day"""
+        # Map time of day to sky colors
+        if time_of_day < 0.1:  # Night to pre-dawn
+            progress = time_of_day / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['night'], 
+                                                  self.sky_colors['pre_dawn'], 
+                                                  progress)
+        elif time_of_day < 0.2:  # Pre-dawn to sunrise
+            progress = (time_of_day - 0.1) / 0.1
+            if progress < 0.5:
+                # Pre-dawn to dawn
+                p = progress * 2
+                self.bg_color = self._interpolate_color(self.sky_colors['pre_dawn'],
+                                                      self.sky_colors['dawn'],
+                                                      p)
+            else:
+                # Dawn to sunrise
+                p = (progress - 0.5) * 2
+                self.bg_color = self._interpolate_color(self.sky_colors['dawn'],
+                                                      self.sky_colors['sunrise'],
+                                                      p)
+        elif time_of_day < 0.3:  # Sunrise to morning
+            progress = (time_of_day - 0.2) / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['sunrise'],
+                                                  self.sky_colors['morning'],
+                                                  progress)
+        elif time_of_day < 0.4:  # Morning to day
+            progress = (time_of_day - 0.3) / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['morning'],
+                                                  self.sky_colors['day'],
+                                                  progress)
+        elif time_of_day < 0.6:  # Full day
+            self.bg_color = self.sky_colors['day']
+        elif time_of_day < 0.7:  # Day to afternoon
+            progress = (time_of_day - 0.6) / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['day'],
+                                                  self.sky_colors['afternoon'],
+                                                  progress)
+        elif time_of_day < 0.8:  # Afternoon to sunset
+            progress = (time_of_day - 0.7) / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['afternoon'],
+                                                  self.sky_colors['sunset'],
+                                                  progress)
+        elif time_of_day < 0.9:  # Sunset to dusk
+            progress = (time_of_day - 0.8) / 0.1
+            if progress < 0.5:
+                # Sunset to dusk
+                p = progress * 2
+                self.bg_color = self._interpolate_color(self.sky_colors['sunset'],
+                                                      self.sky_colors['dusk'],
+                                                      p)
+            else:
+                # Dusk to post-dusk
+                p = (progress - 0.5) * 2
+                self.bg_color = self._interpolate_color(self.sky_colors['dusk'],
+                                                      self.sky_colors['post_dusk'],
+                                                      p)
+        else:  # Post-dusk to night
+            progress = (time_of_day - 0.9) / 0.1
+            self.bg_color = self._interpolate_color(self.sky_colors['post_dusk'],
+                                                  self.sky_colors['night'],
+                                                  progress)
+
+    def _interpolate_color(self, color1: tuple, color2: tuple, progress: float) -> tuple:
+        """Interpolate between two colors"""
+        return tuple(int(c1 + (c2 - c1) * progress) for c1, c2 in zip(color1, color2))
+
     def update(self) -> None:
         """Update all garden elements"""
         self.frame_count += 1
@@ -256,6 +314,34 @@ class Garden:
             
         # Update environmental conditions
         self.update_environment()
+        
+        # Update celestial objects
+        day_progress = self.current_time / self.day_length
+        
+        # Calculate sun and moon positions
+        angle = day_progress * 2 * math.pi - math.pi/2  # Start at top
+        orbit_center_y = self.height * 0.8  # Moved orbit center up
+        orbit_radius_x = self.width * 0.6
+        orbit_radius_y = self.height * 0.7  # Reduced vertical radius
+        
+        # Sun position (visible during day)
+        sun_x = self.width/2 + math.cos(angle) * orbit_radius_x
+        sun_y = orbit_center_y + math.sin(angle) * orbit_radius_y
+        self.sun.x = sun_x
+        self.sun.y = sun_y
+        self.sun.update()
+        
+        # Moon position (opposite of sun)
+        moon_angle = angle + math.pi
+        moon_x = self.width/2 + math.cos(moon_angle) * orbit_radius_x
+        moon_y = orbit_center_y + math.sin(moon_angle) * orbit_radius_y
+        self.moon.x = moon_x
+        self.moon.y = moon_y
+        self.moon.update()
+        
+        # Update stars
+        for star in self.stars:
+            star.update()
         
         # Update plants
         for plant in self.plants[:]:
@@ -274,42 +360,199 @@ class Garden:
             
     def draw_rain(self) -> None:
         """Draw rain effect with optimizations"""
-        if self.rain_intensity > 0:
-            # Only update rain positions every 5 frames
-            if self.frame_count % 5 == 0:
+        if self.current_weather in ['rain', 'storm']:
+            # Only update rain positions every 3 frames for smoother animation
+            if self.frame_count % 3 == 0:
                 self.rain_surface.fill((0, 0, 0, 0))
                 
                 # Update or initialize rain drops
-                if not self.rain_drops or self.rain_update_counter >= 20:
+                if not self.rain_drops or self.rain_update_counter >= 15:
                     self.rain_drops = []
-                    num_drops = int(100 * self.rain_intensity)
-                    for _ in range(num_drops):
-                        x = random.gauss(self.rain_center[0], 100)
-                        y = random.randint(0, self.height)
-                        size = random.uniform(2, 4)
-                        self.rain_drops.append((x, y, size))
+                    # Generate drops for each cloud
+                    for cloud in self.clouds:
+                        cloud_center_x = cloud['x'] + cloud['size'] / 2
+                        cloud_bottom_y = cloud['y'] + cloud['size'] / 3
+                        
+                        # Number of drops based on rain intensity and cloud size
+                        num_drops = int(self.drops_per_cloud * 0.2 * (cloud['size'] / 150))
+                        
+                        for _ in range(num_drops):
+                            # Randomize starting position within cloud bounds
+                            drop_x = random.gauss(cloud_center_x, cloud['size'] / 4)
+                            drop_y = random.gauss(cloud_bottom_y, 10)
+                            
+                            # Vary drop sizes based on weather
+                            if self.current_weather == 'storm':
+                                size = random.uniform(3, 5)
+                                speed = random.uniform(12, 15)
+                            else:
+                                size = random.uniform(2, 3)
+                                speed = random.uniform(8, 10)
+                            
+                            # Add some horizontal movement based on wind
+                            wind_effect = self.wind_speed * random.uniform(0.8, 1.2)
+                            
+                            self.rain_drops.append({
+                                'x': drop_x,
+                                'y': drop_y,
+                                'size': size,
+                                'speed': speed,
+                                'wind': wind_effect
+                            })
                     self.rain_update_counter = 0
                 else:
-                    # Move existing drops down
+                    # Move existing drops down and apply wind effect
                     new_drops = []
-                    for x, y, size in self.rain_drops:
-                        y = (y + 5) % self.height  # Wrap around when reaching bottom
-                        new_drops.append((x, y, size))
+                    for drop in self.rain_drops:
+                        # Update position with wind and speed
+                        drop['y'] += drop['speed']
+                        drop['x'] += drop['wind']
+                        
+                        # Keep drops that are still on screen
+                        if drop['y'] < self.height:
+                            new_drops.append(drop)
                     self.rain_drops = new_drops
                     self.rain_update_counter += 1
                 
-                # Draw all drops
-                for x, y, size in self.rain_drops:
-                    pygame.draw.circle(self.rain_surface, (150, 150, 255, 100),
-                                     (int(x), int(y)), int(size))
+                # Draw all drops with trail effect
+                for drop in self.rain_drops:
+                    # Draw elongated raindrop
+                    start_pos = (int(drop['x']), int(drop['y']))
+                    end_pos = (int(drop['x'] - drop['wind']), 
+                             int(drop['y'] - drop['speed'] * 0.5))
+                    
+                    # Make storms more visible
+                    alpha = 150 if self.current_weather == 'storm' else 100
+                    
+                    pygame.draw.line(self.rain_surface, (150, 150, 255, alpha),
+                                   start_pos, end_pos, int(drop['size']))
             
             # Blit the cached rain surface
             self.screen.blit(self.rain_surface, (0, 0))
             
+    def _draw_hills(self) -> None:
+        """Draw rolling hills on the horizon"""
+        # Create a surface for the hills
+        hills_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        
+        # Draw each hill as a filled curve
+        for hill in self.hills:
+            points = []
+            # Start from left of the screen to ensure full coverage
+            x = -hill['width'] / 2
+            while x <= self.width + hill['width'] / 2:
+                # Use sine wave for smooth hills
+                distance_from_center = (x - hill['center_x']) / (hill['width'] / 2)
+                y = hill['height'] * math.cos(distance_from_center * math.pi / 2)**2
+                y = self.height - y
+                points.append((x, y))
+                x += 10  # Step size for curve smoothness
+            
+            # Add bottom corners to create a filled polygon
+            points.append((self.width + hill['width'] / 2, self.height))
+            points.append((-hill['width'] / 2, self.height))
+            
+            # Draw the hill
+            pygame.draw.polygon(hills_surface, hill['color'], points)
+        
+        # Add some darker shading at the base of the hills
+        shade_rect = pygame.Rect(0, int(self.height * 0.8), self.width, int(self.height * 0.2))
+        shade_surface = pygame.Surface((self.width, int(self.height * 0.2)), pygame.SRCALPHA)
+        pygame.draw.rect(shade_surface, (0, 0, 0, 50), shade_surface.get_rect())
+        hills_surface.blit(shade_surface, (0, int(self.height * 0.8)))
+        
+        # Draw the hills on the screen
+        self.screen.blit(hills_surface, (0, 0))
+
     def draw(self) -> None:
         """Draw all garden elements"""
-        # Clear screen with current sky color
+        # Get time of day and update sky color
+        day_progress = self.current_time / self.day_length
+        self._blend_sky_color(day_progress)
+        
+        # Fill background
         self.screen.fill(self.bg_color)
+        
+        # Draw stars during night, dawn, and dusk
+        # Dawn: 0.0-0.2, Dusk: 0.8-1.0
+        is_transition = day_progress < 0.2 or day_progress > 0.8
+        is_night = day_progress > 0.9 or day_progress < 0.1
+        
+        if is_transition or is_night:
+            # Calculate star visibility
+            if is_night:
+                star_alpha = 255  # Full visibility at night
+            else:
+                # Fade during dawn/dusk
+                if day_progress < 0.2:  # Dawn
+                    progress = 1.0 - (day_progress / 0.2)  # 1.0 at start, 0.0 at end
+                else:  # Dusk
+                    progress = (day_progress - 0.8) / 0.2  # 0.0 at start, 1.0 at end
+                star_alpha = int(255 * progress)
+            
+            # Update and draw stars
+            for star in self.stars:
+                star.color = (*star.color[:3], star_alpha)
+                star.update()  # Update twinkle animation
+                star.draw(self.screen)
+        
+        # Calculate celestial object positions
+        horizon_y = self.height * 0.75  # Horizon line at 75% of screen height
+        max_height = self.height * 0.1  # Maximum height of sun/moon (10% from top)
+        
+        # Sun position follows a semicircle path
+        if day_progress <= 0.8:  # Visible until dusk
+            # Calculate sun position on arc
+            sun_progress = (day_progress - 0.2) / 0.6  # Normalize to 0-1 for day period
+            if sun_progress < 0:
+                sun_progress = 0
+            sun_angle = math.pi * sun_progress
+            sun_x = self.width * 0.5 + math.cos(sun_angle) * (self.width * 0.4)
+            sun_y = horizon_y - math.sin(sun_angle) * (horizon_y - max_height)
+            
+            # Update sun position
+            self.sun.x = sun_x
+            self.sun.y = sun_y
+            
+            # Calculate sun visibility
+            sun_alpha = 255
+            if day_progress < 0.2:  # Dawn fade in
+                sun_alpha = int(255 * (day_progress / 0.2))
+            elif day_progress > 0.6:  # Pre-dusk fade out
+                sun_alpha = int(255 * (1.0 - (day_progress - 0.6) / 0.2))
+            self.sun.color = (*self.sun.color[:3], sun_alpha)
+            
+            # Draw sun
+            self.sun.draw(self.screen)
+        
+        # Moon position follows opposite semicircle path
+        if day_progress >= 0.8 or day_progress <= 0.2:  # Visible from dusk to dawn
+            # Calculate moon position on arc
+            if day_progress >= 0.8:
+                moon_progress = (day_progress - 0.8) / 0.4
+            else:
+                moon_progress = (day_progress + 0.2) / 0.4
+            moon_angle = math.pi * moon_progress
+            moon_x = self.width * 0.5 + math.cos(moon_angle) * (self.width * 0.4)
+            moon_y = horizon_y - math.sin(moon_angle) * (horizon_y - max_height)
+            
+            # Update moon position
+            self.moon.x = moon_x
+            self.moon.y = moon_y
+            
+            # Calculate moon visibility
+            moon_alpha = 255
+            if day_progress > 0.8:  # Dusk fade in
+                moon_alpha = int(255 * ((day_progress - 0.8) / 0.2))
+            elif day_progress < 0.2:  # Pre-dawn fade out
+                moon_alpha = int(255 * (1.0 - day_progress / 0.2))
+            self.moon.color = (*self.moon.color[:3], moon_alpha)
+            
+            # Draw moon
+            self.moon.draw(self.screen)
+
+        # Draw hills
+        self._draw_hills()
         
         # Draw clouds if weather is cloudy or rainy
         if self.current_weather in ['cloudy', 'rain', 'storm']:
@@ -322,7 +565,7 @@ class Garden:
         # Draw rain if weather is rainy
         if self.current_weather in ['rain', 'storm']:
             self.draw_rain()
-            
+        
         # Draw weather stats
         self._draw_weather_stats()
         

@@ -72,13 +72,15 @@ class LeafGenerator:
             # Leaf shape formula using modified ellipse
             x = size * math.cos(math.pi * t)
             
-            # Modify y based on edge_type
+            # Calculate y based on edge_type
             if self.shape.edge_type == 'smooth':
                 y = width * math.sin(math.pi * t)
             elif self.shape.edge_type == 'serrated':
                 y = width * math.sin(math.pi * t) * (1 + 0.2 * math.sin(8 * math.pi * t))
             elif self.shape.edge_type == 'lobed':
                 y = width * math.sin(math.pi * t) * (1 + 0.4 * math.sin(3 * math.pi * t))
+            else:  # Default to smooth if edge_type is not recognized
+                y = width * math.sin(math.pi * t)
             
             # Rotate points by angle
             rotated_x = x * math.cos(angle) - y * math.sin(angle)
