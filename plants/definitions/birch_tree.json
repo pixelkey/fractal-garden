@@ -1,27 +1,85 @@
 {
-    "name": "Silver Birch",
-    "scientific_name": "Betula pendula",
-    "type": "tree",
-    "growth_rate": 0.5,
-    "max_size": 700,
-    "branching_angle_range": [-0.8, 0.8],
-    "branch_length_range": [150, 400],
-    "max_branches": 20,
-    "color": {
-        "stem": [220, 220, 220],
-        "leaf": [120, 170, 60]
+    "species": "Betula pendula",
+    "common_name": "Silver Birch",
+    "growth_characteristics": {
+        "max_height": 8.0,
+        "growth_rate": 0.5,
+        "lifespan": 4000,
+        "flowering": {
+            "min_maturity": 1.0,
+            "chance": 0.0,
+            "min_delay": 0,
+            "max_delay": 0,
+            "bloom_duration": 0
+        }
     },
-    "leaf_size": 6,
-    "leaf_density": 0.6,
-    "optimal_conditions": {
-        "water": [50, 80],
-        "light": [70, 100],
-        "temperature": [10, 25],
-        "humidity": [40, 70]
+    "environmental_requirements": {
+        "optimal_water": [50, 80],
+        "optimal_light": [70, 100],
+        "optimal_temp": [10, 25],
+        "optimal_humidity": [40, 70],
+        "drought_tolerance": 0.7,
+        "heat_tolerance": 0.7
     },
-    "stress_tolerance": {
-        "water": 0.7,
-        "light": 0.8,
-        "temperature": 0.7
+    "stem": {
+        "properties": {
+            "thickness": 15,
+            "flexibility": 0.3,
+            "branching_angle": 0.8,
+            "branching_variance": 0.4,
+            "max_branches": 25,
+            "growth_rate": 1.0,
+            "branch_spacing": 0.25
+        },
+        "appearance": {
+            "color": [220, 220, 220],
+            "texture": "woody",
+            "node_visibility": 0.7,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 1.0,
+            "edge_type": "serrated",
+            "vein_pattern": "pinnate",
+            "base_shape": "rounded",
+            "tip_shape": "acute"
+        },
+        "color": {
+            "base_color": [120, 170, 60],
+            "variation": 20,
+            "vein_color": [100, 150, 50],
+            "seasonal_colors": [
+                [120, 170, 60],
+                [180, 200, 50],
+                [200, 180, 40],
+                [160, 120, 30]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "none",
+            "length_ratio": 0,
+            "tip_shape": "none",
+            "edge_type": "none",
+            "curve": 0
+        },
+        "structure": {
+            "arrangement": "none",
+            "num_petals": 0,
+            "petal_layers": 0,
+            "symmetry": "none",
+            "center_type": "none",
+            "center_size_ratio": 0
+        },
+        "colors": {
+            "petal_colors": [],
+            "center_color": [0, 0, 0],
+            "color_variation": 0,
+            "has_patterns": false
+        }
     }
 }

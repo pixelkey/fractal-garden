@@ -1,27 +1,85 @@
 {
-    "name": "Common Sage",
-    "scientific_name": "Salvia officinalis",
-    "type": "herb",
-    "growth_rate": 0.6,
-    "max_size": 80,
-    "branching_angle_range": [-0.6, 0.6],
-    "branch_length_range": [30, 70],
-    "max_branches": 15,
-    "color": {
-        "stem": [100, 120, 90],
-        "leaf": [110, 130, 110]
+    "species": "Salvia officinalis",
+    "common_name": "Common Sage",
+    "growth_characteristics": {
+        "max_height": 0.7,
+        "growth_rate": 0.6,
+        "lifespan": 1000,
+        "flowering": {
+            "min_maturity": 0.4,
+            "chance": 0.7,
+            "min_delay": 20,
+            "max_delay": 60,
+            "bloom_duration": 300
+        }
     },
-    "leaf_size": 6,
-    "leaf_density": 0.8,
-    "optimal_conditions": {
-        "water": [40, 60],
-        "light": [70, 100],
-        "temperature": [15, 30],
-        "humidity": [40, 60]
+    "environmental_requirements": {
+        "optimal_water": [40, 60],
+        "optimal_light": [70, 100],
+        "optimal_temp": [15, 30],
+        "optimal_humidity": [40, 60],
+        "drought_tolerance": 0.8,
+        "heat_tolerance": 0.7
     },
-    "stress_tolerance": {
-        "water": 0.8,
-        "light": 0.7,
-        "temperature": 0.7
+    "stem": {
+        "properties": {
+            "thickness": 4,
+            "flexibility": 0.4,
+            "branching_angle": 0.5,
+            "branching_variance": 0.2,
+            "max_branches": 16,
+            "growth_rate": 0.9,
+            "branch_spacing": 0.18
+        },
+        "appearance": {
+            "color": [90, 110, 80],
+            "texture": "herbaceous",
+            "node_visibility": 0.7,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 1.8,
+            "edge_type": "crenate",
+            "vein_pattern": "pinnate",
+            "base_shape": "rounded",
+            "tip_shape": "rounded"
+        },
+        "color": {
+            "base_color": [100, 120, 100],
+            "variation": 15,
+            "vein_color": [90, 110, 90],
+            "seasonal_colors": [
+                [100, 120, 100],
+                [105, 125, 105],
+                [110, 130, 110],
+                [95, 115, 95]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 1.5,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.4
+        },
+        "structure": {
+            "arrangement": "spike",
+            "num_petals": 5,
+            "petal_layers": 1,
+            "symmetry": "bilateral",
+            "center_type": "small",
+            "center_size_ratio": 0.2
+        },
+        "colors": {
+            "petal_colors": [[150, 100, 200]],
+            "center_color": [180, 160, 200],
+            "color_variation": 15,
+            "has_patterns": false
+        }
     }
 }

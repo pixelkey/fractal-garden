@@ -2,8 +2,8 @@
     "species": "Acer palmatum",
     "common_name": "Japanese Maple",
     "growth_characteristics": {
-        "max_height": 1.2,
-        "growth_rate": 0.8,
+        "max_height": 6.0,
+        "growth_rate": 0.6,
         "lifespan": 3000,
         "flowering": {
             "min_maturity": 1.0,
@@ -18,16 +18,16 @@
         "optimal_light": [60, 80],
         "optimal_temp": [10, 25],
         "optimal_humidity": [40, 70],
-        "drought_tolerance": 0.4,
-        "heat_tolerance": 0.5
+        "drought_tolerance": 0.6,
+        "heat_tolerance": 0.6
     },
     "stem": {
         "properties": {
-            "thickness": 8,
+            "thickness": 12,
             "flexibility": 0.2,
             "branching_angle": 0.8,
             "branching_variance": 0.3,
-            "max_branches": 15,
+            "max_branches": 20,
             "growth_rate": 1.0,
             "branch_spacing": 0.2
         },

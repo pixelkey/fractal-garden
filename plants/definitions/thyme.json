@@ -1,27 +1,85 @@
 {
-    "name": "Common Thyme",
-    "scientific_name": "Thymus vulgaris",
-    "type": "herb",
-    "growth_rate": 0.7,
-    "max_size": 40,
-    "branching_angle_range": [-0.3, 0.3],
-    "branch_length_range": [15, 35],
-    "max_branches": 25,
-    "color": {
-        "stem": [90, 110, 80],
-        "leaf": [70, 100, 70]
+    "species": "Thymus vulgaris",
+    "common_name": "Common Thyme",
+    "growth_characteristics": {
+        "max_height": 0.25,
+        "growth_rate": 0.6,
+        "lifespan": 700,
+        "flowering": {
+            "min_maturity": 0.4,
+            "chance": 0.7,
+            "min_delay": 20,
+            "max_delay": 60,
+            "bloom_duration": 200
+        }
     },
-    "leaf_size": 2,
-    "leaf_density": 0.95,
-    "optimal_conditions": {
-        "water": [30, 50],
-        "light": [70, 100],
-        "temperature": [15, 30],
-        "humidity": [30, 50]
+    "environmental_requirements": {
+        "optimal_water": [30, 50],
+        "optimal_light": [80, 100],
+        "optimal_temp": [15, 30],
+        "optimal_humidity": [30, 50],
+        "drought_tolerance": 0.9,
+        "heat_tolerance": 0.8
     },
-    "stress_tolerance": {
-        "water": 0.9,
-        "light": 0.8,
-        "temperature": 0.7
+    "stem": {
+        "properties": {
+            "thickness": 2,
+            "flexibility": 0.4,
+            "branching_angle": 0.4,
+            "branching_variance": 0.2,
+            "max_branches": 25,
+            "growth_rate": 0.8,
+            "branch_spacing": 0.1
+        },
+        "appearance": {
+            "color": [90, 100, 80],
+            "texture": "woody",
+            "node_visibility": 0.6,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 0.8,
+            "edge_type": "smooth",
+            "vein_pattern": "pinnate",
+            "base_shape": "rounded",
+            "tip_shape": "rounded"
+        },
+        "color": {
+            "base_color": [60, 90, 60],
+            "variation": 10,
+            "vein_color": [50, 80, 50],
+            "seasonal_colors": [
+                [60, 90, 60],
+                [65, 95, 65],
+                [70, 100, 70],
+                [55, 85, 55]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 0.8,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.2
+        },
+        "structure": {
+            "arrangement": "cluster",
+            "num_petals": 4,
+            "petal_layers": 1,
+            "symmetry": "bilateral",
+            "center_type": "small",
+            "center_size_ratio": 0.15
+        },
+        "colors": {
+            "petal_colors": [[230, 200, 230]],
+            "center_color": [200, 180, 200],
+            "color_variation": 15,
+            "has_patterns": false
+        }
     }
 }

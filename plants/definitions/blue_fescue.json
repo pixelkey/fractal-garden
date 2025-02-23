@@ -1,27 +1,85 @@
 {
-    "name": "Blue Fescue",
-    "scientific_name": "Festuca glauca",
-    "type": "grass",
-    "growth_rate": 0.7,
-    "max_size": 40,
-    "branching_angle_range": [-0.2, 0.2],
-    "branch_length_range": [20, 50],
-    "max_branches": 25,
-    "color": {
-        "stem": [100, 140, 160],
-        "leaf": [120, 160, 180]
+    "species": "Festuca glauca",
+    "common_name": "Blue Fescue",
+    "growth_characteristics": {
+        "max_height": 0.3,
+        "growth_rate": 0.7,
+        "lifespan": 500,
+        "flowering": {
+            "min_maturity": 0.6,
+            "chance": 0.4,
+            "min_delay": 30,
+            "max_delay": 90,
+            "bloom_duration": 150
+        }
     },
-    "leaf_size": 3,
-    "leaf_density": 0.8,
-    "optimal_conditions": {
-        "water": [40, 70],
-        "light": [80, 100],
-        "temperature": [15, 30],
-        "humidity": [30, 60]
+    "environmental_requirements": {
+        "optimal_water": [40, 60],
+        "optimal_light": [70, 100],
+        "optimal_temp": [10, 25],
+        "optimal_humidity": [40, 70],
+        "drought_tolerance": 0.8,
+        "heat_tolerance": 0.7
     },
-    "stress_tolerance": {
-        "water": 0.9,
-        "light": 0.8,
-        "temperature": 0.8
+    "stem": {
+        "properties": {
+            "thickness": 1,
+            "flexibility": 0.8,
+            "branching_angle": 0.2,
+            "branching_variance": 0.1,
+            "max_branches": 30,
+            "growth_rate": 1.0,
+            "branch_spacing": 0.05
+        },
+        "appearance": {
+            "color": [150, 170, 190],
+            "texture": "grass",
+            "node_visibility": 0.3,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "linear",
+            "length_ratio": 15.0,
+            "edge_type": "smooth",
+            "vein_pattern": "parallel",
+            "base_shape": "tapered",
+            "tip_shape": "acute"
+        },
+        "color": {
+            "base_color": [130, 150, 180],
+            "variation": 15,
+            "vein_color": [120, 140, 170],
+            "seasonal_colors": [
+                [130, 150, 180],
+                [140, 160, 190],
+                [120, 140, 170],
+                [110, 130, 160]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 3.0,
+            "tip_shape": "pointed",
+            "edge_type": "smooth",
+            "curve": 0.1
+        },
+        "structure": {
+            "arrangement": "spike",
+            "num_petals": 1,
+            "petal_layers": 1,
+            "symmetry": "radial",
+            "center_type": "grass",
+            "center_size_ratio": 0.8
+        },
+        "colors": {
+            "petal_colors": [[200, 210, 180]],
+            "center_color": [180, 190, 160],
+            "color_variation": 10,
+            "has_patterns": false
+        }
     }
 }

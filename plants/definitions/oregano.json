@@ -1,27 +1,85 @@
 {
-    "name": "Greek Oregano",
-    "scientific_name": "Origanum vulgare hirtum",
-    "type": "herb",
-    "growth_rate": 0.7,
-    "max_size": 50,
-    "branching_angle_range": [-0.45, 0.45],
-    "branch_length_range": [20, 45],
-    "max_branches": 20,
-    "color": {
-        "stem": [90, 110, 80],
-        "leaf": [80, 120, 70]
+    "species": "Origanum vulgare hirtum",
+    "common_name": "Greek Oregano",
+    "growth_characteristics": {
+        "max_height": 0.5,
+        "growth_rate": 0.7,
+        "lifespan": 800,
+        "flowering": {
+            "min_maturity": 0.4,
+            "chance": 0.7,
+            "min_delay": 20,
+            "max_delay": 60,
+            "bloom_duration": 200
+        }
     },
-    "leaf_size": 4,
-    "leaf_density": 0.85,
-    "optimal_conditions": {
-        "water": [40, 60],
-        "light": [70, 100],
-        "temperature": [15, 30],
-        "humidity": [40, 60]
+    "environmental_requirements": {
+        "optimal_water": [40, 60],
+        "optimal_light": [70, 100],
+        "optimal_temp": [15, 30],
+        "optimal_humidity": [40, 60],
+        "drought_tolerance": 0.8,
+        "heat_tolerance": 0.7
     },
-    "stress_tolerance": {
-        "water": 0.8,
-        "light": 0.8,
-        "temperature": 0.7
+    "stem": {
+        "properties": {
+            "thickness": 3,
+            "flexibility": 0.4,
+            "branching_angle": 0.45,
+            "branching_variance": 0.2,
+            "max_branches": 20,
+            "growth_rate": 1.0,
+            "branch_spacing": 0.15
+        },
+        "appearance": {
+            "color": [90, 110, 80],
+            "texture": "herbaceous",
+            "node_visibility": 0.6,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 1.1,
+            "edge_type": "smooth",
+            "vein_pattern": "pinnate",
+            "base_shape": "rounded",
+            "tip_shape": "rounded"
+        },
+        "color": {
+            "base_color": [80, 120, 70],
+            "variation": 15,
+            "vein_color": [70, 110, 60],
+            "seasonal_colors": [
+                [80, 120, 70],
+                [85, 125, 75],
+                [90, 130, 80],
+                [75, 115, 65]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 1.0,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.2
+        },
+        "structure": {
+            "arrangement": "cluster",
+            "num_petals": 5,
+            "petal_layers": 1,
+            "symmetry": "radial",
+            "center_type": "small",
+            "center_size_ratio": 0.2
+        },
+        "colors": {
+            "petal_colors": [[255, 255, 255]],
+            "center_color": [240, 220, 50],
+            "color_variation": 10,
+            "has_patterns": false
+        }
     }
 }

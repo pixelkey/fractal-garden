@@ -1,27 +1,85 @@
 {
-    "name": "Rosemary",
-    "scientific_name": "Rosmarinus officinalis",
-    "type": "herb",
-    "growth_rate": 0.5,
-    "max_size": 120,
-    "branching_angle_range": [-0.4, 0.4],
-    "branch_length_range": [40, 90],
-    "max_branches": 20,
-    "color": {
-        "stem": [80, 100, 70],
-        "leaf": [60, 90, 60]
+    "species": "Rosmarinus officinalis",
+    "common_name": "Rosemary",
+    "growth_characteristics": {
+        "max_height": 0.9,
+        "growth_rate": 0.6,
+        "lifespan": 1200,
+        "flowering": {
+            "min_maturity": 0.5,
+            "chance": 0.6,
+            "min_delay": 25,
+            "max_delay": 70,
+            "bloom_duration": 250
+        }
     },
-    "leaf_size": 3,
-    "leaf_density": 0.9,
-    "optimal_conditions": {
-        "water": [30, 50],
-        "light": [80, 100],
-        "temperature": [15, 30],
-        "humidity": [30, 50]
+    "environmental_requirements": {
+        "optimal_water": [30, 50],
+        "optimal_light": [80, 100],
+        "optimal_temp": [15, 30],
+        "optimal_humidity": [40, 60],
+        "drought_tolerance": 0.9,
+        "heat_tolerance": 0.8
     },
-    "stress_tolerance": {
-        "water": 0.9,
-        "light": 0.8,
-        "temperature": 0.8
+    "stem": {
+        "properties": {
+            "thickness": 4,
+            "flexibility": 0.3,
+            "branching_angle": 0.5,
+            "branching_variance": 0.2,
+            "max_branches": 18,
+            "growth_rate": 0.8,
+            "branch_spacing": 0.15
+        },
+        "appearance": {
+            "color": [80, 100, 70],
+            "texture": "woody",
+            "node_visibility": 0.7,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "needle",
+            "length_ratio": 3.0,
+            "edge_type": "smooth",
+            "vein_pattern": "parallel",
+            "base_shape": "tapered",
+            "tip_shape": "acute"
+        },
+        "color": {
+            "base_color": [40, 80, 40],
+            "variation": 10,
+            "vein_color": [35, 75, 35],
+            "seasonal_colors": [
+                [40, 80, 40],
+                [45, 85, 45],
+                [50, 90, 50],
+                [35, 75, 35]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 1.2,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.3
+        },
+        "structure": {
+            "arrangement": "cluster",
+            "num_petals": 5,
+            "petal_layers": 1,
+            "symmetry": "bilateral",
+            "center_type": "small",
+            "center_size_ratio": 0.2
+        },
+        "colors": {
+            "petal_colors": [[180, 200, 255]],
+            "center_color": [220, 220, 100],
+            "color_variation": 10,
+            "has_patterns": false
+        }
     }
 }

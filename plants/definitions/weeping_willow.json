@@ -1,27 +1,85 @@
 {
-    "name": "Weeping Willow",
-    "scientific_name": "Salix babylonica",
-    "type": "tree",
-    "growth_rate": 0.4,
-    "max_size": 800,
-    "branching_angle_range": [-1.2, 1.2],
-    "branch_length_range": [200, 500],
-    "max_branches": 25,
-    "color": {
-        "stem": [101, 67, 33],
-        "leaf": [130, 180, 70]
+    "species": "Salix babylonica",
+    "common_name": "Weeping Willow",
+    "growth_characteristics": {
+        "max_height": 10.0,
+        "growth_rate": 0.7,
+        "lifespan": 3500,
+        "flowering": {
+            "min_maturity": 1.0,
+            "chance": 0.0,
+            "min_delay": 0,
+            "max_delay": 0,
+            "bloom_duration": 0
+        }
     },
-    "leaf_size": 8,
-    "leaf_density": 0.7,
-    "optimal_conditions": {
-        "water": [70, 90],
-        "light": [60, 90],
-        "temperature": [15, 30],
-        "humidity": [50, 80]
+    "environmental_requirements": {
+        "optimal_water": [70, 90],
+        "optimal_light": [60, 90],
+        "optimal_temp": [15, 30],
+        "optimal_humidity": [50, 80],
+        "drought_tolerance": 0.6,
+        "heat_tolerance": 0.6
     },
-    "stress_tolerance": {
-        "water": 0.6,
-        "light": 0.7,
-        "temperature": 0.6
+    "stem": {
+        "properties": {
+            "thickness": 18,
+            "flexibility": 0.6,
+            "branching_angle": 1.2,
+            "branching_variance": 0.5,
+            "max_branches": 30,
+            "growth_rate": 1.2,
+            "branch_spacing": 0.3
+        },
+        "appearance": {
+            "color": [101, 67, 33],
+            "texture": "woody",
+            "node_visibility": 0.6,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 2.5,
+            "edge_type": "serrated",
+            "vein_pattern": "pinnate",
+            "base_shape": "acute",
+            "tip_shape": "acuminate"
+        },
+        "color": {
+            "base_color": [130, 180, 70],
+            "variation": 25,
+            "vein_color": [110, 160, 60],
+            "seasonal_colors": [
+                [130, 180, 70],
+                [190, 210, 60],
+                [220, 200, 50],
+                [180, 140, 40]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "none",
+            "length_ratio": 0,
+            "tip_shape": "none",
+            "edge_type": "none",
+            "curve": 0
+        },
+        "structure": {
+            "arrangement": "none",
+            "num_petals": 0,
+            "petal_layers": 0,
+            "symmetry": "none",
+            "center_type": "none",
+            "center_size_ratio": 0
+        },
+        "colors": {
+            "petal_colors": [],
+            "center_color": [0, 0, 0],
+            "color_variation": 0,
+            "has_patterns": false
+        }
     }
 }

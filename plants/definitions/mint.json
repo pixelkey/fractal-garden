@@ -1,27 +1,85 @@
 {
-    "name": "Peppermint",
-    "scientific_name": "Mentha × piperita",
-    "type": "herb",
-    "growth_rate": 0.9,
-    "max_size": 60,
-    "branching_angle_range": [-0.4, 0.4],
-    "branch_length_range": [20, 50],
-    "max_branches": 22,
-    "color": {
-        "stem": [100, 140, 100],
-        "leaf": [60, 160, 60]
+    "species": "Mentha × piperita",
+    "common_name": "Peppermint",
+    "growth_characteristics": {
+        "max_height": 0.6,
+        "growth_rate": 0.9,
+        "lifespan": 600,
+        "flowering": {
+            "min_maturity": 0.3,
+            "chance": 0.8,
+            "min_delay": 15,
+            "max_delay": 45,
+            "bloom_duration": 180
+        }
     },
-    "leaf_size": 5,
-    "leaf_density": 0.8,
-    "optimal_conditions": {
-        "water": [70, 90],
-        "light": [60, 90],
-        "temperature": [15, 25],
-        "humidity": [60, 80]
+    "environmental_requirements": {
+        "optimal_water": [70, 90],
+        "optimal_light": [60, 90],
+        "optimal_temp": [15, 25],
+        "optimal_humidity": [60, 80],
+        "drought_tolerance": 0.7,
+        "heat_tolerance": 0.7
     },
-    "stress_tolerance": {
-        "water": 0.7,
-        "light": 0.6,
-        "temperature": 0.7
+    "stem": {
+        "properties": {
+            "thickness": 3,
+            "flexibility": 0.5,
+            "branching_angle": 0.4,
+            "branching_variance": 0.2,
+            "max_branches": 22,
+            "growth_rate": 1.2,
+            "branch_spacing": 0.12
+        },
+        "appearance": {
+            "color": [100, 140, 100],
+            "texture": "herbaceous",
+            "node_visibility": 0.7,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 1.4,
+            "edge_type": "serrated",
+            "vein_pattern": "pinnate",
+            "base_shape": "rounded",
+            "tip_shape": "acute"
+        },
+        "color": {
+            "base_color": [60, 160, 60],
+            "variation": 20,
+            "vein_color": [50, 150, 50],
+            "seasonal_colors": [
+                [60, 160, 60],
+                [65, 165, 65],
+                [70, 170, 70],
+                [55, 155, 55]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "simple",
+            "length_ratio": 0.8,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.1
+        },
+        "structure": {
+            "arrangement": "spike",
+            "num_petals": 4,
+            "petal_layers": 1,
+            "symmetry": "radial",
+            "center_type": "small",
+            "center_size_ratio": 0.15
+        },
+        "colors": {
+            "petal_colors": [[230, 200, 255]],
+            "center_color": [200, 180, 220],
+            "color_variation": 15,
+            "has_patterns": false
+        }
     }
 }
