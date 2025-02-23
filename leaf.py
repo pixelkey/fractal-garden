@@ -125,26 +125,33 @@ class LeafGenerator:
             
         return color
         
-    def draw(self, surface: pygame.Surface, pos: Tuple[float, float], 
-            size: float, angle: float, age: float = 1.0, season: str = 'summer') -> None:
-        """Draw the leaf on the given surface"""
+    def draw(self, screen: pygame.Surface, pos: Tuple[float, float], size: float, angle: float, alpha: int = 255) -> None:
+        """Draw a leaf at the specified position with given size and angle"""
         points = self.generate_points(size, angle)
         
-        # Translate points to position
-        translated_points = [(x + pos[0], y + pos[1]) for x, y in points]
+        # Adjust points to position
+        positioned_points = [(x + pos[0], y + pos[1]) for x, y in points]
         
-        # Draw filled leaf
-        if len(translated_points) >= 3:
-            color = self.get_color(age, season)
-            pygame.draw.polygon(surface, color, translated_points)
+        # Get base color with variation
+        r, g, b = self.color.base_color
+        variation = random.randint(-self.color.variation, self.color.variation)
+        color = (
+            max(0, min(255, r + variation)),
+            max(0, min(255, g + variation)),
+            max(0, min(255, b + variation)),
+            alpha
+        )
+        
+        # Draw filled polygon for leaf body
+        if len(positioned_points) > 2:
+            pygame.draw.polygon(screen, color, positioned_points)
             
             # Draw veins if specified
             if self.color.vein_color and self.shape.vein_pattern != 'none':
-                self._draw_veins(surface, translated_points, self.color.vein_color, 
-                               self.shape.vein_pattern)
+                vein_color = (*self.color.vein_color, alpha)
+                self._draw_veins(screen, positioned_points, vein_color, self.shape.vein_pattern)
                 
-    def _draw_veins(self, surface: pygame.Surface, points: List[Tuple[float, float]], 
-                    color: Tuple[int, int, int], pattern: str) -> None:
+    def _draw_veins(self, screen: pygame.Surface, points: List[Tuple[float, float]], color: Tuple[int, int, int, int], pattern: str) -> None:
         """Draw leaf veins based on pattern type"""
         if len(points) < 2:
             return
@@ -157,7 +164,7 @@ class LeafGenerator:
             # Draw main vein
             start = points[0]
             end = points[len(points)//2]
-            pygame.draw.line(surface, color, start, end, 1)
+            pygame.draw.line(screen, color, start, end, 1)
             
             # Draw side veins
             num_veins = 5
@@ -177,7 +184,7 @@ class LeafGenerator:
                         main_point[0] + math.cos(angle) * length * side,
                         main_point[1] + math.sin(angle) * length * side
                     )
-                    pygame.draw.line(surface, color, main_point, vein_end, 1)
+                    pygame.draw.line(screen, color, main_point, vein_end, 1)
                     
         elif pattern == 'palmate':
             # Draw veins radiating from base
@@ -189,4 +196,4 @@ class LeafGenerator:
                     center_x + math.cos(angle) * length,
                     center_y + math.sin(angle) * length
                 )
-                pygame.draw.line(surface, color, (center_x, center_y), end, 1)
+                pygame.draw.line(screen, color, (center_x, center_y), end, 1)

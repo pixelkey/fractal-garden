@@ -115,6 +115,13 @@ class Branch:
         for child in self.children:
             child.draw(surface, color, thickness * 0.8)  # Children slightly thinner
 
+    def get_all_branches(self) -> List['Branch']:
+        """Get this branch and all child branches recursively"""
+        branches = [self]
+        for child in self.children:
+            branches.extend(child.get_all_branches())
+        return branches
+
 class StemSystem:
     """Manages the growth and rendering of a plant's stem system"""
     
@@ -206,3 +213,7 @@ class StemSystem:
                 
         # Start drawing from main stem
         draw_branch_with_health(self.main_stem, self.properties.thickness)
+
+    def get_all_branches(self) -> List[Branch]:
+        """Get all branches in the stem system"""
+        return self.main_stem.get_all_branches()

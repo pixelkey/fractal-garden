@@ -63,6 +63,11 @@ class Plant:
         # Store flower data for each branch
         self.flower_data = {}  # Dictionary to store flower info by branch ID
         
+        # Cache for text rendering
+        self._name_surfaces = None
+        self._last_health = None
+        self._last_growth = None
+        
     def update(self, environment: EnvironmentalFactors) -> None:
         """Update plant state based on environmental conditions"""
         # Only update every other frame to reduce CPU load
@@ -126,16 +131,81 @@ class Plant:
         # Draw stem system
         self.stem_system.draw(screen, (self.x, self.y))
         
+        # Calculate alpha based on withering state
+        alpha = 255
+        if self.is_withering:
+            alpha = int(255 * (1 - (self.wither_time / self.max_wither_time)))
+        
         # Only draw leaves and flowers if plant is somewhat healthy
         if self.health > 30:
-            # Draw leaves on branches
-            self._draw_leaves_on_branch(screen, self.stem_system.main_stem)
+            # Draw leaves on branches with withering effect
+            self._draw_leaves_on_branch(screen, self.stem_system.main_stem, alpha)
             
             # Draw flowers when mature
             if self.growth_stage > 0.7:  # Only draw flowers when plant is mature
-                self._draw_flowers(screen)
+                self._draw_flowers(screen, alpha)
+        
+        # Draw plant name with caching
+        if self.health > 10:  # Only show name if plant is somewhat alive
+            # Check if we need to update the cached surfaces
+            if (self._name_surfaces is None or 
+                self._last_health != self.health or 
+                self._last_growth != self.growth_stage):
                 
-    def _draw_leaves_on_branch(self, screen: pygame.Surface, branch: Branch) -> None:
+                # Create font (use a system font since we don't want to depend on specific fonts)
+                font_size = int(24 * (0.8 + 0.2 * self.growth_stage))
+                try:
+                    font = pygame.font.SysFont('Arial', font_size)
+                except:
+                    font = pygame.font.Font(None, font_size)
+                
+                # Create name text with both common and scientific names
+                name_text = f"{self.definition.common_name}"
+                scientific_text = f"({self.definition.species})"
+                
+                # Render text with a shadow for better visibility
+                text_color = (0, 0, 0, alpha)
+                shadow_color = (255, 255, 255, alpha)
+                
+                # Render main name
+                name_surface = font.render(name_text, True, text_color)
+                name_shadow = font.render(name_text, True, shadow_color)
+                
+                # Render scientific name in italics if possible
+                try:
+                    italic_font = pygame.font.SysFont('Arial', int(font_size * 0.8), italic=True)
+                except:
+                    italic_font = font
+                scientific_surface = italic_font.render(scientific_text, True, text_color)
+                scientific_shadow = italic_font.render(scientific_text, True, shadow_color)
+                
+                # Cache the surfaces and current state
+                self._name_surfaces = (name_surface, name_shadow, scientific_surface, scientific_shadow)
+                self._last_health = self.health
+                self._last_growth = self.growth_stage
+            
+            # Use cached surfaces
+            name_surface, name_shadow, scientific_surface, scientific_shadow = self._name_surfaces
+            
+            # Calculate positions - moved closer to stem base
+            # Find the lowest point of the plant's stem system
+            lowest_y = self.y
+            for branch in self.stem_system.get_all_branches():
+                lowest_y = max(lowest_y, branch.end_pos[1])
+            
+            # Position text above the lowest point
+            name_x = self.x - name_surface.get_width() // 2
+            name_y = min(lowest_y + 10, pygame.display.get_surface().get_height() - name_surface.get_height() - scientific_surface.get_height() - 20)
+            scientific_x = self.x - scientific_surface.get_width() // 2
+            scientific_y = name_y + name_surface.get_height() + 2
+            
+            # Draw shadows then text
+            screen.blit(name_shadow, (name_x + 1, name_y + 1))
+            screen.blit(name_surface, (name_x, name_y))
+            screen.blit(scientific_shadow, (scientific_x + 1, scientific_y + 1))
+            screen.blit(scientific_surface, (scientific_x, scientific_y))
+            
+    def _draw_leaves_on_branch(self, screen: pygame.Surface, branch: Branch, alpha: int = 255) -> None:
         """Draw leaves along a branch"""
         if branch.growth < 0.3:  # Only draw leaves on mature enough branches
             return
@@ -165,11 +235,11 @@ class Plant:
                 final_angle = leaf_angle + side_angle
                 
                 # Draw the leaf
-                self.leaf_generator.draw(screen, leaf_pos, 20.0, final_angle)
+                self.leaf_generator.draw(screen, leaf_pos, 20.0, final_angle, alpha=alpha)
                 
         # Recursively draw leaves on sub-branches
         for child in branch.children:
-            self._draw_leaves_on_branch(screen, child)
+            self._draw_leaves_on_branch(screen, child, alpha)
             
     def _should_flower(self, branch: Branch) -> bool:
         """Determine if a branch should have a flower"""
@@ -249,7 +319,7 @@ class Plant:
             
         return False
         
-    def _draw_flowers(self, screen: pygame.Surface) -> None:
+    def _draw_flowers(self, screen: pygame.Surface, alpha: int = 255) -> None:
         """Draw flowers on branch tips"""
         def draw_flower_on_branch(branch: Branch):
             # Check if branch should have a flower
@@ -277,19 +347,21 @@ class Plant:
                 # Draw with stage-specific modifications
                 if data['stage'] == 'bud':
                     # Draw a simple green circle for bud
-                    pygame.draw.circle(screen, (34, 139, 34),
+                    bud_alpha = min(alpha, 255)
+                    bud_color = (34, 139, 34, bud_alpha)
+                    pygame.draw.circle(screen, bud_color,
                                     (int(flower_pos[0]), int(flower_pos[1])),
                                     int(size * 0.5))
                 else:
                     # Draw flower with stage-specific alpha
-                    alpha = 255
+                    flower_alpha = min(alpha, 255)
                     if data['stage'] == 'opening':
-                        alpha = int(128 + 127 * data['stage_progress'])
+                        flower_alpha = min(alpha, int(128 + 127 * data['stage_progress']))
                     elif data['stage'] == 'withering':
-                        alpha = int(255 * (1.0 - data['stage_progress']))
+                        flower_alpha = min(alpha, int(255 * (1.0 - data['stage_progress'])))
                     
                     self.flower_generator.draw(screen, flower_pos, size, branch.angle,
-                                            alpha=alpha)
+                                            alpha=flower_alpha)
                 
             # Recursively draw on child branches
             for child in branch.children:

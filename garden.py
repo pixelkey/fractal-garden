@@ -16,7 +16,6 @@ class Garden:
         self.height = int(screen_info.current_h * 1.5)
         
         # Calculate scaling factors for plants based on screen size
-        # Use the smaller dimension to maintain proportions
         self.scale_factor = min(self.width, self.height) / 1000.0  # Base size of 1000 pixels
         
         # Create the window - use resizable flag to handle large dimensions
@@ -39,21 +38,28 @@ class Garden:
             soil_quality=90.0
         )
         
-        # Rain system
+        # Rain system optimization
         self.rain_center = (random.randint(0, self.width), 0)
         self.rain_target = (random.randint(0, self.width), 0)
         self.rain_move_timer = 0
         self.rain_intensity = 0.5
+        self.rain_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.rain_drops = []  # Cache rain drop positions
+        self.rain_update_counter = 0
         
         # Background color
         self.bg_color = (10, 20, 30)
         
         # FPS control
         self.target_fps = 60
+        self.frame_count = 0
         
         # Plant addition control
         self.time_since_last_plant = 0
         self.plant_add_interval = 120  # Frames between plant additions
+        
+        # Performance optimizations
+        self.update_interval = 2  # Only update every N frames
         
     def _load_plant_definitions(self) -> Dict[str, Any]:
         """Load all plant definitions from the definitions directory"""
@@ -131,6 +137,12 @@ class Garden:
         
     def update(self) -> None:
         """Update all garden elements"""
+        self.frame_count += 1
+        
+        # Only update every N frames
+        if self.frame_count % self.update_interval != 0:
+            return
+            
         # Update environmental conditions
         self.update_environment()
         
@@ -150,19 +162,38 @@ class Garden:
             self.time_since_last_plant = 0
             
     def draw_rain(self) -> None:
-        """Draw rain effect"""
+        """Draw rain effect with optimizations"""
         if self.rain_intensity > 0:
-            rain_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-            num_drops = int(100 * self.rain_intensity)
+            # Only update rain positions every 5 frames
+            if self.frame_count % 5 == 0:
+                self.rain_surface.fill((0, 0, 0, 0))
+                
+                # Update or initialize rain drops
+                if not self.rain_drops or self.rain_update_counter >= 20:
+                    self.rain_drops = []
+                    num_drops = int(100 * self.rain_intensity)
+                    for _ in range(num_drops):
+                        x = random.gauss(self.rain_center[0], 100)
+                        y = random.randint(0, self.height)
+                        size = random.uniform(2, 4)
+                        self.rain_drops.append((x, y, size))
+                    self.rain_update_counter = 0
+                else:
+                    # Move existing drops down
+                    new_drops = []
+                    for x, y, size in self.rain_drops:
+                        y = (y + 5) % self.height  # Wrap around when reaching bottom
+                        new_drops.append((x, y, size))
+                    self.rain_drops = new_drops
+                    self.rain_update_counter += 1
+                
+                # Draw all drops
+                for x, y, size in self.rain_drops:
+                    pygame.draw.circle(self.rain_surface, (150, 150, 255, 100),
+                                     (int(x), int(y)), int(size))
             
-            for _ in range(num_drops):
-                x = random.gauss(self.rain_center[0], 100)
-                y = random.randint(0, self.height)
-                size = random.uniform(2, 4)
-                pygame.draw.circle(rain_surface, (150, 150, 255, 100),
-                                 (int(x), int(y)), int(size))
-                                 
-            self.screen.blit(rain_surface, (0, 0))
+            # Blit the cached rain surface
+            self.screen.blit(self.rain_surface, (0, 0))
             
     def draw(self) -> None:
         """Draw all garden elements"""
