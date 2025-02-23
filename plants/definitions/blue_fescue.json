@@ -61,7 +61,7 @@
     },
     "flower": {
         "petal_shape": {
-            "type": "simple",
+            "type": "pointed",
             "length_ratio": 3.0,
             "tip_shape": "pointed",
             "edge_type": "smooth",
