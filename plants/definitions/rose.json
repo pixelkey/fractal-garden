@@ -1,0 +1,82 @@
+{
+    "species": "Rosa",
+    "common_name": "Garden Rose",
+    "growth_characteristics": {
+        "max_height": 200,
+        "growth_rate": 2.0,
+        "lifespan": 1500
+    },
+    "environmental_requirements": {
+        "optimal_water": [60, 80],
+        "optimal_light": [70, 90],
+        "optimal_temp": [15, 25],
+        "optimal_humidity": [40, 70],
+        "drought_tolerance": 0.4,
+        "heat_tolerance": 0.6
+    },
+    "stem": {
+        "properties": {
+            "thickness": 2,
+            "flexibility": 0.3,
+            "branching_angle": 0.6,
+            "branching_variance": 0.2,
+            "max_branches": 8,
+            "growth_rate": 2.0,
+            "branch_spacing": 0.15
+        },
+        "appearance": {
+            "color": [34, 139, 34],
+            "texture": "thorny",
+            "node_visibility": 0.5,
+            "thorn_frequency": 0.3
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "compound",
+            "length_ratio": 2.0,
+            "edge_type": "serrated",
+            "vein_pattern": "pinnate",
+            "base_shape": "pointed",
+            "tip_shape": "pointed"
+        },
+        "color": {
+            "base_color": [34, 139, 34],
+            "variation": 20,
+            "vein_color": [24, 120, 24],
+            "seasonal_colors": [
+                [120, 180, 120],
+                [34, 139, 34],
+                [180, 100, 50],
+                [139, 69, 19]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "round",
+            "length_ratio": 1.2,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.3
+        },
+        "structure": {
+            "arrangement": "simple",
+            "num_petals": 20,
+            "petal_layers": 3,
+            "symmetry": "radial",
+            "center_type": "boss",
+            "center_size_ratio": 0.15
+        },
+        "colors": {
+            "petal_colors": [
+                [255, 50, 50],
+                [220, 20, 60],
+                [200, 10, 50]
+            ],
+            "center_color": [139, 69, 19],
+            "color_variation": 20,
+            "has_patterns": false
+        }
+    }
+}
