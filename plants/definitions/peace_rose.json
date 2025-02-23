@@ -1,9 +1,9 @@
 {
-    "species": "Rosa × hybrida 'Mister Lincoln'",
-    "common_name": "Mister Lincoln Hybrid Tea Rose",
+    "species": "Rosa × hybrida 'Madame A. Meilland'",
+    "common_name": "Peace Rose",
     "growth_characteristics": {
         "max_height": 0.9,
-        "growth_rate": 2.0,
+        "growth_rate": 1.8,
         "lifespan": 1500,
         "flowering": {
             "min_maturity": 0.2,
@@ -62,28 +62,28 @@
     "flower": {
         "petal_shape": {
             "type": "round",
-            "length_ratio": 1.2,
+            "length_ratio": 1.3,
             "tip_shape": "rounded",
             "edge_type": "smooth",
-            "curve": 0.3
+            "curve": 0.4
         },
         "structure": {
             "arrangement": "simple",
-            "num_petals": 35,
-            "petal_layers": 4,
+            "num_petals": 45,
+            "petal_layers": 5,
             "symmetry": "radial",
             "center_type": "boss",
             "center_size_ratio": 0.15
         },
         "colors": {
             "petal_colors": [
-                [180, 0, 0],
-                [160, 0, 0],
-                [140, 0, 0]
+                [255, 255, 200],
+                [255, 230, 180],
+                [255, 192, 150]
             ],
-            "center_color": [139, 69, 19],
+            "center_color": [255, 182, 193],
             "color_variation": 15,
-            "has_patterns": false
+            "has_patterns": true
         }
     }
 }

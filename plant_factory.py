@@ -65,6 +65,11 @@ class Plant:
         
     def update(self, environment: EnvironmentalFactors) -> None:
         """Update plant state based on environmental conditions"""
+        # Only update every other frame to reduce CPU load
+        self.age += 1
+        if self.age % 2 != 0:
+            return
+            
         if self.is_withering:
             # When withering, just count down until removal
             self.wither_time += 1
@@ -83,32 +88,17 @@ class Plant:
         # Update growth stage
         if self.health > 50:  # Only grow if relatively healthy
             growth_amount = 0.005 * (1 - stress) * self.definition.growth_characteristics.growth_rate
+            old_growth = self.growth_stage
             self.growth_stage = min(1.0, self.growth_stage + growth_amount)
             
-            # Grow stem system
-            if self.growth_stage > 0:
+            # Only update stem if there's meaningful growth
+            if self.growth_stage > old_growth and self.growth_stage > 0:
                 self.stem_system.grow(growth_amount * 2)  # Double growth rate for more visible growth
                 
-            # Log growth progress
-            if self.age % 100 == 0:  # Log every 100 frames
-                print(f"Plant {self.definition.species} at ({self.x}, {self.y}):")
-                print(f"  Age: {self.age}, Health: {self.health:.1f}%, Growth: {self.growth_stage:.2f}")
-                print(f"  Branches: {len(self.stem_system.main_stem.children)}")
-                print(f"  Stress - Water: {water_stress:.2f}, Light: {light_stress:.2f}")
-                print(f"  Growth Amount: {growth_amount:.4f}")
-                
-        # Update health based on stress
-        self.health = max(0, self.health - stress * 0.1)
-        
-        # Age the plant
-        self.age += 1
-        
-        # Check if plant should start withering
-        if self.health < 10 or self.age > self.max_age:
-            if not self.is_withering:
-                print(f"Plant {self.definition.species} is starting to wither! Health: {self.health:.1f}%")
-                self.is_withering = True
-                
+        # Update health based on stress, but less frequently
+        if self.age % 5 == 0:
+            self.health = max(0, self.health - stress * 0.1)
+            
     def _calculate_stress(self, value: float, optimal_range: Tuple[float, float]) -> float:
         """Calculate stress level (0.0 to 1.0) based on how far a value is from optimal range"""
         if optimal_range[0] <= value <= optimal_range[1]:
@@ -143,11 +133,6 @@ class Plant:
             
             # Draw flowers when mature
             if self.growth_stage > 0.7:  # Only draw flowers when plant is mature
-                print(f"Drawing flowers for plant at ({self.x}, {self.y})")
-                print(f"  Growth stage: {self.growth_stage:.2f}")
-                print(f"  Health: {self.health:.1f}")
-                print(f"  Main stem growth: {self.stem_system.main_stem.growth:.2f}")
-                print(f"  Num branches: {len(self.stem_system.main_stem.children)}")
                 self._draw_flowers(screen)
                 
     def _draw_leaves_on_branch(self, screen: pygame.Surface, branch: Branch) -> None:
@@ -196,14 +181,12 @@ class Plant:
             
         # Only start flowering when plant is mature enough
         if self.growth_stage < self.definition.growth_characteristics.flowering.min_maturity:
-            print(f"Plant not mature enough: {self.growth_stage} < {self.definition.growth_characteristics.flowering.min_maturity}")
             return False
             
         # If branch hasn't been evaluated for flowering, initialize its data
         if branch_id not in self.flower_data:
             flowering = self.definition.growth_characteristics.flowering
             should_flower = random.random() < flowering.chance
-            print(f"New branch {branch_id} evaluated for flowering: {should_flower}")
             self.flower_data[branch_id] = {
                 'should_flower': should_flower,
                 'flower_time': self.age + random.randint(flowering.min_delay, flowering.max_delay),
@@ -220,7 +203,6 @@ class Plant:
         if data['should_flower'] and self.age >= data['flower_time']:
             # Initialize bud if not started
             if data['bud_start'] is None:
-                print(f"Branch {branch_id} starting bud")
                 data['bud_start'] = self.age
                 data['stage'] = 'bud'
                 data['stage_progress'] = 0.0
@@ -233,7 +215,6 @@ class Plant:
                 # Bud takes 100 frames to develop
                 data['stage_progress'] = min(1.0, time_in_stage / 100)
                 if data['stage_progress'] >= 1.0:
-                    print(f"Branch {branch_id} bud opening")
                     data['stage'] = 'opening'
                     data['stage_progress'] = 0.0
                     data['bud_start'] = self.age
@@ -242,7 +223,6 @@ class Plant:
                 # Opening takes 150 frames
                 data['stage_progress'] = min(1.0, time_in_stage / 150)
                 if data['stage_progress'] >= 1.0:
-                    print(f"Branch {branch_id} fully bloomed")
                     data['stage'] = 'bloomed'
                     data['stage_progress'] = 0.0
                     data['bud_start'] = self.age
@@ -251,7 +231,6 @@ class Plant:
             elif data['stage'] == 'bloomed':
                 # Check if it's time to start withering
                 if self.age > data['bloom_end']:
-                    print(f"Branch {branch_id} starting to wither")
                     data['stage'] = 'withering'
                     data['stage_progress'] = 0.0
                     data['bud_start'] = self.age
@@ -260,14 +239,12 @@ class Plant:
                 # Withering takes 100 frames
                 data['stage_progress'] = min(1.0, time_in_stage / 100)
                 if data['stage_progress'] >= 1.0:
-                    print(f"Branch {branch_id} finished withering")
                     # 30% chance to start a new flower cycle
                     if random.random() < 0.3:
                         data['flower_time'] = self.age + random.randint(300, 600)
                         data['bud_start'] = None
                     return False
             
-            print(f"Branch {branch_id} in stage {data['stage']} progress {data['stage_progress']:.2f}")
             return True
             
         return False
@@ -338,7 +315,6 @@ class PlantFactory:
         try:
             with open(json_path, 'r') as f:
                 data = json.load(f)
-                print("Successfully loaded JSON data")
                 
             # Create growth characteristics
             growth_chars = GrowthCharacteristics(
@@ -449,7 +425,6 @@ class PlantFactory:
                 flower_generator=flower_generator
             )
             
-            print(f"Successfully loaded plant: {definition.species}")
             return definition
             
         except Exception as e:

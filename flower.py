@@ -33,6 +33,30 @@ class FlowerGenerator:
         self.petal_shape = petal_shape
         self.structure = structure
         self.colors = colors
+        # Cache color variations for each layer
+        self._cached_colors = self._generate_color_variations()
+        
+    def _generate_color_variations(self) -> List[Tuple[int, int, int]]:
+        """Generate and cache color variations for petals"""
+        variations = []
+        for base_color in self.colors.petal_colors:
+            if not self.colors.color_variation:
+                variations.append(base_color)
+                continue
+                
+            r, g, b = base_color
+            var = self.colors.color_variation
+            variations.append((
+                max(0, min(255, r + random.randint(-var, var))),
+                max(0, min(255, g + random.randint(-var, var))),
+                max(0, min(255, b + random.randint(-var, var)))
+            ))
+        return variations
+        
+    def _get_petal_color(self, layer: int, alpha: int) -> Tuple[int, int, int, int]:
+        """Get cached color for petal"""
+        color = self._cached_colors[layer % len(self._cached_colors)]
+        return color + (alpha,)
         
     def draw(self, surface: pygame.Surface, pos: Tuple[float, float],
              size: float, angle: float, alpha: int = 255) -> None:
@@ -86,21 +110,6 @@ class FlowerGenerator:
                 # Draw petal outline
                 pygame.draw.polygon(surface, (0, 0, 0, alpha), points, max(1, int(size/20)))
                 
-    def _get_petal_color(self, layer: int, alpha: int) -> Tuple[int, int, int, int]:
-        """Get color for petal with variation"""
-        base_color = self.colors.petal_colors[layer % len(self.colors.petal_colors)]
-        if not self.colors.color_variation:
-            return base_color + (alpha,)
-            
-        r, g, b = base_color
-        var = self.colors.color_variation
-        return (
-            max(0, min(255, r + random.randint(-var, var))),
-            max(0, min(255, g + random.randint(-var, var))),
-            max(0, min(255, b + random.randint(-var, var))),
-            alpha
-        )
-        
     def _generate_petal_points(self, pos: Tuple[float, float],
                              size: float, angle: float) -> List[Tuple[float, float]]:
         """Generate points for a petal"""

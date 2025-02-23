@@ -1,0 +1,85 @@
+{
+    "species": "Acer palmatum",
+    "common_name": "Japanese Maple",
+    "growth_characteristics": {
+        "max_height": 1.2,
+        "growth_rate": 0.8,
+        "lifespan": 3000,
+        "flowering": {
+            "min_maturity": 1.0,
+            "chance": 0.0,
+            "min_delay": 0,
+            "max_delay": 0,
+            "bloom_duration": 0
+        }
+    },
+    "environmental_requirements": {
+        "optimal_water": [50, 70],
+        "optimal_light": [60, 80],
+        "optimal_temp": [10, 25],
+        "optimal_humidity": [40, 70],
+        "drought_tolerance": 0.4,
+        "heat_tolerance": 0.5
+    },
+    "stem": {
+        "properties": {
+            "thickness": 8,
+            "flexibility": 0.2,
+            "branching_angle": 0.8,
+            "branching_variance": 0.3,
+            "max_branches": 15,
+            "growth_rate": 1.0,
+            "branch_spacing": 0.2
+        },
+        "appearance": {
+            "color": [101, 67, 33],
+            "texture": "woody",
+            "node_visibility": 0.8,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "palmate",
+            "length_ratio": 1.2,
+            "edge_type": "deeply_serrated",
+            "vein_pattern": "palmate",
+            "base_shape": "cordate",
+            "tip_shape": "acuminate"
+        },
+        "color": {
+            "base_color": [180, 0, 0],
+            "variation": 30,
+            "vein_color": [140, 0, 0],
+            "seasonal_colors": [
+                [120, 180, 120],
+                [180, 0, 0],
+                [200, 40, 0],
+                [139, 69, 19]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "none",
+            "length_ratio": 0,
+            "tip_shape": "none",
+            "edge_type": "none",
+            "curve": 0
+        },
+        "structure": {
+            "arrangement": "none",
+            "num_petals": 0,
+            "petal_layers": 0,
+            "symmetry": "none",
+            "center_type": "none",
+            "center_size_ratio": 0
+        },
+        "colors": {
+            "petal_colors": [],
+            "center_color": [0, 0, 0],
+            "color_variation": 0,
+            "has_patterns": false
+        }
+    }
+}

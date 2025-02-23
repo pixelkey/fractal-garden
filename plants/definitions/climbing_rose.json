@@ -1,16 +1,16 @@
 {
-    "species": "Rosa × hybrida 'Mister Lincoln'",
-    "common_name": "Mister Lincoln Hybrid Tea Rose",
+    "species": "Rosa 'New Dawn'",
+    "common_name": "New Dawn Climbing Rose",
     "growth_characteristics": {
-        "max_height": 0.9,
-        "growth_rate": 2.0,
-        "lifespan": 1500,
+        "max_height": 2.4,
+        "growth_rate": 2.5,
+        "lifespan": 2000,
         "flowering": {
-            "min_maturity": 0.2,
-            "chance": 1.0,
-            "min_delay": 10,
-            "max_delay": 50,
-            "bloom_duration": 400
+            "min_maturity": 0.3,
+            "chance": 0.8,
+            "min_delay": 15,
+            "max_delay": 60,
+            "bloom_duration": 350
         }
     },
     "environmental_requirements": {
@@ -18,24 +18,24 @@
         "optimal_light": [70, 90],
         "optimal_temp": [15, 25],
         "optimal_humidity": [40, 70],
-        "drought_tolerance": 0.4,
+        "drought_tolerance": 0.5,
         "heat_tolerance": 0.6
     },
     "stem": {
         "properties": {
-            "thickness": 6,
-            "flexibility": 0.3,
-            "branching_angle": 0.6,
-            "branching_variance": 0.2,
-            "max_branches": 8,
-            "growth_rate": 2.0,
-            "branch_spacing": 0.15
+            "thickness": 7,
+            "flexibility": 0.6,
+            "branching_angle": 0.9,
+            "branching_variance": 0.4,
+            "max_branches": 12,
+            "growth_rate": 2.2,
+            "branch_spacing": 0.2
         },
         "appearance": {
             "color": [34, 139, 34],
             "texture": "woody",
             "node_visibility": 0.7,
-            "thorn_frequency": 0.3
+            "thorn_frequency": 0.4
         }
     },
     "leaves": {
@@ -62,27 +62,27 @@
     "flower": {
         "petal_shape": {
             "type": "round",
-            "length_ratio": 1.2,
+            "length_ratio": 1.1,
             "tip_shape": "rounded",
             "edge_type": "smooth",
             "curve": 0.3
         },
         "structure": {
             "arrangement": "simple",
-            "num_petals": 35,
-            "petal_layers": 4,
+            "num_petals": 30,
+            "petal_layers": 3,
             "symmetry": "radial",
             "center_type": "boss",
-            "center_size_ratio": 0.15
+            "center_size_ratio": 0.12
         },
         "colors": {
             "petal_colors": [
-                [180, 0, 0],
-                [160, 0, 0],
-                [140, 0, 0]
+                [255, 192, 203],
+                [255, 182, 193],
+                [255, 172, 183]
             ],
-            "center_color": [139, 69, 19],
-            "color_variation": 15,
+            "center_color": [255, 215, 0],
+            "color_variation": 10,
             "has_patterns": false
         }
     }

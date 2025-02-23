@@ -1,0 +1,89 @@
+{
+    "species": "Lavandula angustifolia",
+    "common_name": "English Lavender",
+    "growth_characteristics": {
+        "max_height": 0.6,
+        "growth_rate": 1.0,
+        "lifespan": 1200,
+        "flowering": {
+            "min_maturity": 0.3,
+            "chance": 0.9,
+            "min_delay": 20,
+            "max_delay": 60,
+            "bloom_duration": 500
+        }
+    },
+    "environmental_requirements": {
+        "optimal_water": [40, 60],
+        "optimal_light": [80, 100],
+        "optimal_temp": [18, 28],
+        "optimal_humidity": [30, 50],
+        "drought_tolerance": 0.8,
+        "heat_tolerance": 0.7
+    },
+    "stem": {
+        "properties": {
+            "thickness": 4,
+            "flexibility": 0.5,
+            "branching_angle": 0.4,
+            "branching_variance": 0.1,
+            "max_branches": 12,
+            "growth_rate": 1.5,
+            "branch_spacing": 0.1
+        },
+        "appearance": {
+            "color": [100, 100, 100],
+            "texture": "woody",
+            "node_visibility": 0.6,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 4.0,
+            "edge_type": "smooth",
+            "vein_pattern": "parallel",
+            "base_shape": "tapered",
+            "tip_shape": "pointed"
+        },
+        "color": {
+            "base_color": [128, 128, 128],
+            "variation": 10,
+            "vein_color": [100, 100, 100],
+            "seasonal_colors": [
+                [128, 128, 128],
+                [128, 128, 128],
+                [120, 120, 120],
+                [110, 110, 110]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "tubular",
+            "length_ratio": 0.8,
+            "tip_shape": "lobed",
+            "edge_type": "smooth",
+            "curve": 0.2
+        },
+        "structure": {
+            "arrangement": "spike",
+            "num_petals": 6,
+            "petal_layers": 1,
+            "symmetry": "bilateral",
+            "center_type": "tube",
+            "center_size_ratio": 0.1
+        },
+        "colors": {
+            "petal_colors": [
+                [102, 102, 153],
+                [121, 121, 180],
+                [140, 140, 200]
+            ],
+            "center_color": [80, 80, 120],
+            "color_variation": 10,
+            "has_patterns": false
+        }
+    }
+}

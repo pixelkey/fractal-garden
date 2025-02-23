@@ -1,0 +1,89 @@
+{
+    "species": "Hydrangea macrophylla",
+    "common_name": "Bigleaf Hydrangea",
+    "growth_characteristics": {
+        "max_height": 1.2,
+        "growth_rate": 1.5,
+        "lifespan": 1800,
+        "flowering": {
+            "min_maturity": 0.4,
+            "chance": 0.95,
+            "min_delay": 30,
+            "max_delay": 80,
+            "bloom_duration": 600
+        }
+    },
+    "environmental_requirements": {
+        "optimal_water": [70, 90],
+        "optimal_light": [60, 80],
+        "optimal_temp": [18, 26],
+        "optimal_humidity": [50, 80],
+        "drought_tolerance": 0.3,
+        "heat_tolerance": 0.4
+    },
+    "stem": {
+        "properties": {
+            "thickness": 5,
+            "flexibility": 0.4,
+            "branching_angle": 0.7,
+            "branching_variance": 0.2,
+            "max_branches": 10,
+            "growth_rate": 1.8,
+            "branch_spacing": 0.18
+        },
+        "appearance": {
+            "color": [139, 69, 19],
+            "texture": "woody",
+            "node_visibility": 0.6,
+            "thorn_frequency": 0.0
+        }
+    },
+    "leaves": {
+        "shape": {
+            "type": "simple",
+            "length_ratio": 1.5,
+            "edge_type": "serrated",
+            "vein_pattern": "reticulate",
+            "base_shape": "rounded",
+            "tip_shape": "pointed"
+        },
+        "color": {
+            "base_color": [0, 100, 0],
+            "variation": 15,
+            "vein_color": [0, 80, 0],
+            "seasonal_colors": [
+                [120, 180, 120],
+                [0, 100, 0],
+                [180, 130, 50],
+                [139, 69, 19]
+            ]
+        }
+    },
+    "flower": {
+        "petal_shape": {
+            "type": "round",
+            "length_ratio": 0.8,
+            "tip_shape": "rounded",
+            "edge_type": "smooth",
+            "curve": 0.2
+        },
+        "structure": {
+            "arrangement": "cluster",
+            "num_petals": 4,
+            "petal_layers": 1,
+            "symmetry": "radial",
+            "center_type": "cluster",
+            "center_size_ratio": 0.1
+        },
+        "colors": {
+            "petal_colors": [
+                [100, 149, 237],
+                [70, 130, 230],
+                [50, 110, 220]
+            ],
+            "center_color": [255, 255, 255],
+            "color_variation": 10,
+            "has_patterns": false
+        }
+    }
+}
