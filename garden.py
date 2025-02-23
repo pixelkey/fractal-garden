@@ -121,11 +121,11 @@ class Garden:
         
     def add_plant(self) -> None:
         """Add a new plant to the garden"""
-        if len(self.plants) >= 10:  # Limit total number of plants
+        if len(self.plants) >= 4:  # Limit total number of plants to 4
             return
             
         # Place plant at ground level with some horizontal spacing
-        min_spacing = 100  # Minimum pixels between plants
+        min_spacing = self.width / 5  # Adjust spacing based on screen width to accommodate 4 plants
         max_attempts = 10  # Maximum attempts to find a free spot
         
         for _ in range(max_attempts):

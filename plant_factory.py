@@ -96,28 +96,41 @@ class Plant:
             return
             
         if self.is_withering:
-            # When withering, just count down until removal
+            # When withering, shrink the plant and decrease health
             self.wither_time += 1
+            wither_progress = self.wither_time / self.max_wither_time
             self.health = max(0, self.health - 0.5)  # Continue decreasing health
+            
+            # Shrink the plant as it withers
+            if hasattr(self, 'stem_system'):
+                self.stem_system.properties.thickness *= (1 - wither_progress * 0.01)
+            return
+            
+        # Start withering if the plant is too old or unhealthy
+        if self.age >= self.max_age or self.health <= 20:
+            self.is_withering = True
             return
             
         # Calculate stress factors
         water_stress = self._calculate_stress(environment.water_level,
-                                           self.definition.environmental_requirements.optimal_water)
+                                       self.definition.environmental_requirements.optimal_water)
         light_stress = self._calculate_stress(environment.light_level,
-                                            self.definition.environmental_requirements.optimal_light)
-                                            
+                                        self.definition.environmental_requirements.optimal_light)
+                                        
         # Most limiting factor determines growth
         stress = max(water_stress, light_stress)
         
-        # Update growth stage
-        if self.health > 50:  # Only grow if relatively healthy
+        # Update health based on stress
+        health_change = -0.2 * stress if stress > 0.5 else 0.1 * (1 - stress)
+        self.health = max(0, min(100, self.health + health_change))
+        
+        # Update growth stage if relatively healthy
+        if self.health > 50:
             growth_amount = 0.005 * (1 - stress) * self.definition.growth_characteristics.growth_rate
-            old_growth = self.growth_stage
             self.growth_stage = min(1.0, self.growth_stage + growth_amount)
             
             # Only update stem if there's meaningful growth
-            if self.growth_stage > old_growth and self.growth_stage > 0:
+            if self.growth_stage > 0:
                 self.stem_system.grow(growth_amount * 2)  # Double growth rate for more visible growth
                 
         # Update health based on stress, but less frequently
@@ -479,8 +492,9 @@ class Plant:
         self.flower_data.clear()
         
     def is_dead(self) -> bool:
-        """Check if plant should be removed"""
-        return self.is_withering and self.wither_time >= self.max_wither_time
+        """Check if the plant is dead and should be removed"""
+        # Plant is dead if health is 0 or it has completed withering
+        return self.health <= 0 or (self.is_withering and self.wither_time >= self.max_wither_time)
 
 class PlantFactory:
     """Creates plant instances from JSON definitions"""
