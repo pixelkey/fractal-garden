@@ -54,6 +54,9 @@ class Plant:
         self.wither_time = 0
         self.max_wither_time = 300  # Takes 300 frames to fully wither
         
+        # Cache for leaf placement decisions
+        self._leaf_placement_cache = {}
+        
         # Apply type-based scaling
         type_scale_factors = {
             'tree': 2.5,
@@ -222,6 +225,16 @@ class Plant:
             screen.blit(scientific_shadow, (scientific_x + 1, scientific_y + 1))
             screen.blit(scientific_surface, (scientific_x, scientific_y))
             
+    def _should_place_leaf(self, branch_id: int, leaf_index: int) -> bool:
+        """Determine if a leaf should be placed at this position"""
+        cache_key = (branch_id, leaf_index)
+        if cache_key not in self._leaf_placement_cache:
+            # Use branch_id and leaf_index to seed random
+            random.seed(hash(cache_key))
+            self._leaf_placement_cache[cache_key] = random.random() < 0.8
+            random.seed()  # Reset random seed
+        return self._leaf_placement_cache[cache_key]
+        
     def _draw_leaves_on_branch(self, screen: pygame.Surface, branch: Branch, alpha: int = 255) -> None:
         """Draw leaves along a branch"""
         if branch.growth < 0.3:  # Only draw leaves on mature enough branches
@@ -233,26 +246,59 @@ class Plant:
             branch.end_pos[1] - branch.start_pos[1]
         )
         
-        # Calculate leaf angle based on branch direction
-        leaf_angle = math.atan2(branch_vector[1], branch_vector[0])
+        # Calculate base leaf angle perpendicular to branch
+        branch_angle = math.atan2(branch_vector[1], branch_vector[0])
+        base_leaf_angle = branch_angle + math.pi/2  # Make leaves perpendicular to branch
         
         # Draw leaves along the branch
-        num_leaves = int(branch.length / 20)  # One leaf every 20 pixels
+        num_leaves = int(branch.length / 15)  # More leaves per branch
         for i in range(num_leaves):
-            if random.random() < 0.8:  # 80% chance to draw each leaf
-                t = i / num_leaves
-                # Calculate leaf position relative to branch
-                leaf_pos = (
-                    branch.start_pos[0] + branch_vector[0] * t + self.x,
-                    branch.start_pos[1] + branch_vector[1] * t + self.y
-                )
+            if self._should_place_leaf(id(branch), i):
+                # Add some natural variation to position along branch
+                random.seed(hash((id(branch), i, "pos")))
+                t = (i + 0.3 * (random.random() - 0.5)) / num_leaves  # Vary position by ±15%
+                t = max(0, min(1, t))  # Clamp to valid range
+                random.seed()
                 
-                # Alternate leaves on each side
-                side_angle = math.pi/2 if i % 2 == 0 else -math.pi/2
-                final_angle = leaf_angle + side_angle
+                # Calculate leaf position with some natural offset from branch
+                random.seed(hash((id(branch), i, "offset")))
+                offset_dist = 2.0 * (random.random() - 0.5)  # ±1 pixel perpendicular offset
+                random.seed()
+                
+                perp_vector = (-branch_vector[1], branch_vector[0])  # Perpendicular to branch
+                perp_length = math.sqrt(perp_vector[0]**2 + perp_vector[1]**2)
+                if perp_length > 0:
+                    norm_perp = (perp_vector[0]/perp_length, perp_vector[1]/perp_length)
+                    leaf_pos = (
+                        branch.start_pos[0] + branch_vector[0] * t + norm_perp[0] * offset_dist,
+                        branch.start_pos[1] + branch_vector[1] * t + norm_perp[1] * offset_dist
+                    )
+                else:
+                    leaf_pos = (
+                        branch.start_pos[0] + branch_vector[0] * t,
+                        branch.start_pos[1] + branch_vector[1] * t
+                    )
+                
+                # Add natural variation to the leaf angle
+                # Use leaf position to seed the random variation for consistency
+                random.seed(hash((int(leaf_pos[0]), int(leaf_pos[1]))))
+                angle_variation = math.pi/4 * (random.random() - 0.5)  # ±45 degrees variation
+                random.seed()
+                
+                # Alternate leaves left and right with varying angles
+                side_offset = math.pi/3 if i % 2 == 0 else -math.pi/3  # ±60 degrees from perpendicular
+                
+                # Final angle combines base perpendicular angle, side alternation, and natural variation
+                final_angle = base_leaf_angle + side_offset + angle_variation
+                
+                # Vary leaf size slightly
+                random.seed(hash((id(branch), i, "size")))
+                size_variation = 0.3 * (random.random() - 0.5)  # ±15% size variation
+                leaf_size = 20.0 * self.scale_factor * (1 + size_variation)
+                random.seed()
                 
                 # Draw the leaf
-                self.leaf_generator.draw(screen, leaf_pos, 20.0, final_angle, alpha=alpha)
+                self.leaf_generator.draw(screen, leaf_pos, leaf_size, final_angle, alpha=alpha)
                 
         # Recursively draw leaves on sub-branches
         for child in branch.children:
@@ -448,6 +494,29 @@ class PlantFactory:
                 thorn_frequency=data['stem']['appearance']['thorn_frequency']
             )
             
+            # Create stem system definition
+            stem_system = StemSystemDefinition(stem_props, stem_appear)
+            
+            # Create leaf components
+            leaf_shape = LeafShape(
+                type=data['leaves']['shape']['type'],
+                length_ratio=data['leaves']['shape']['length_ratio'],
+                edge_type=data['leaves']['shape']['edge_type'],
+                vein_pattern=data['leaves']['shape']['vein_pattern'],
+                base_shape=data['leaves']['shape']['base_shape'],
+                tip_shape=data['leaves']['shape']['tip_shape']
+            )
+            
+            leaf_color = LeafColor(
+                base_color=tuple(data['leaves']['color']['base_color']),
+                variation=data['leaves']['color']['variation'],
+                vein_color=tuple(data['leaves']['color']['vein_color']),
+                seasonal_colors=[tuple(c) for c in data['leaves']['color']['seasonal_colors']]
+            )
+            
+            # Create leaf generator
+            leaf_generator = LeafGenerator(leaf_shape, leaf_color)
+            
             # Create flower components
             petal_shape = PetalShape(
                 type=data['flower']['petal_shape']['type'],
@@ -473,38 +542,11 @@ class PlantFactory:
                 has_patterns=data['flower']['colors']['has_patterns']
             )
             
-            # Create leaf components
-            leaf_shape = LeafShape(
-                type=data['leaves']['shape']['type'],
-                length_ratio=data['leaves']['shape']['length_ratio'],
-                edge_type=data['leaves']['shape']['edge_type'],
-                vein_pattern=data['leaves']['shape']['vein_pattern'],
-                base_shape=data['leaves']['shape']['base_shape'],
-                tip_shape=data['leaves']['shape']['tip_shape']
-            )
-            
-            leaf_color = LeafColor(
-                base_color=tuple(data['leaves']['color']['base_color']),
-                variation=data['leaves']['color']['variation'],
-                vein_color=tuple(data['leaves']['color']['vein_color']),
-                seasonal_colors=[tuple(c) for c in data['leaves']['color']['seasonal_colors']]
-            )
-            
-            # Create leaf generator
-            leaf_generator = LeafGenerator(leaf_shape, leaf_color)
-            
             # Create flower generator
-            flower_generator = FlowerGenerator(
-                petal_shape,
-                flower_structure,
-                flower_colors
-            )
+            flower_generator = FlowerGenerator(petal_shape, flower_structure, flower_colors)
             
-            # Create stem system definition
-            stem_system = StemSystemDefinition(stem_props, stem_appear)
-            
-            # Create complete plant definition
-            definition = PlantDefinition(
+            # Create final plant definition
+            plant_def = PlantDefinition(
                 species=data['species'],
                 common_name=data['common_name'],
                 growth_characteristics=growth_chars,
@@ -512,13 +554,13 @@ class PlantFactory:
                 stem_system=stem_system,
                 leaf_generator=leaf_generator,
                 flower_generator=flower_generator,
-                type=data.get('type', 'flower')  # Added plant type
+                type=data.get('type', 'flower')  # Default to 'flower' if not specified
             )
             
-            return definition
+            return plant_def
             
         except Exception as e:
-            print(f"Error loading plant definition: {e}")
+            print(f"Error loading plant definition from {json_path}: {str(e)}")
             return None
             
     @staticmethod
@@ -528,4 +570,8 @@ class PlantFactory:
         # Create stem system from definition
         plant.stem_system = StemSystem(definition.stem_system.properties,
                                      definition.stem_system.appearance)
+        # Set up leaf generator
+        plant.leaf_generator = definition.leaf_generator
+        # Set up flower generator if defined
+        plant.flower_generator = definition.flower_generator
         return plant

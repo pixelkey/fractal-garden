@@ -28,6 +28,25 @@ class LeafGenerator:
     def __init__(self, shape: LeafShape, color: LeafColor):
         self.shape = shape
         self.color = color
+        self._color_cache = {}  # Cache for color variations
+        
+    def _get_color_variation(self, pos: Tuple[float, float]) -> Tuple[int, int, int]:
+        """Get consistent color variation for a leaf position"""
+        # Use position as cache key
+        cache_key = (int(pos[0]), int(pos[1]))
+        if cache_key not in self._color_cache:
+            r, g, b = self.color.base_color
+            # Use position to seed the random variation
+            random.seed(hash(cache_key))
+            variation = random.randint(-self.color.variation, self.color.variation)
+            random.seed()  # Reset random seed
+            
+            self._color_cache[cache_key] = (
+                max(0, min(255, r + variation)),
+                max(0, min(255, g + variation)),
+                max(0, min(255, b + variation))
+            )
+        return self._color_cache[cache_key]
         
     def generate_points(self, size: float, angle: float) -> List[Tuple[float, float]]:
         """Generate points for leaf outline based on shape type"""
@@ -60,7 +79,7 @@ class LeafGenerator:
                 y = width * math.sin(math.pi * t) * (1 + 0.2 * math.sin(8 * math.pi * t))
             elif self.shape.edge_type == 'lobed':
                 y = width * math.sin(math.pi * t) * (1 + 0.4 * math.sin(3 * math.pi * t))
-                
+            
             # Rotate points by angle
             rotated_x = x * math.cos(angle) - y * math.sin(angle)
             rotated_y = x * math.sin(angle) + y * math.cos(angle)
@@ -132,15 +151,9 @@ class LeafGenerator:
         # Adjust points to position
         positioned_points = [(x + pos[0], y + pos[1]) for x, y in points]
         
-        # Get base color with variation
-        r, g, b = self.color.base_color
-        variation = random.randint(-self.color.variation, self.color.variation)
-        color = (
-            max(0, min(255, r + variation)),
-            max(0, min(255, g + variation)),
-            max(0, min(255, b + variation)),
-            alpha
-        )
+        # Get consistent color variation for this leaf
+        r, g, b = self._get_color_variation(pos)
+        color = (r, g, b, alpha)
         
         # Draw filled polygon for leaf body
         if len(positioned_points) > 2:
