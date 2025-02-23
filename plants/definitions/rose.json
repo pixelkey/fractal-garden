@@ -2,7 +2,7 @@
     "species": "Rosa",
     "common_name": "Garden Rose",
     "growth_characteristics": {
-        "max_height": 200,
+        "max_height": 0.3,  
         "growth_rate": 2.0,
         "lifespan": 1500
     },

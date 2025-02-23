@@ -7,11 +7,24 @@ from environment import EnvironmentalFactors
 import math
 
 class Garden:
-    def __init__(self, width: int = 1200, height: int = 800):
-        self.width = width
-        self.height = height
-        self.screen = pygame.display.set_mode((width, height))
+    def __init__(self):
+        pygame.init()
+        
+        # Get the screen info
+        screen_info = pygame.display.Info()
+        self.width = screen_info.current_w
+        self.height = screen_info.current_h
+        
+        # Calculate scaling factors for plants based on screen size
+        # Use the smaller dimension to maintain proportions
+        self.scale_factor = min(self.width, self.height) / 1000.0  # Base size of 1000 pixels
+        
+        # Create the window
+        self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Fractal Garden")
+        
+        # Initialize clock
+        self.clock = pygame.time.Clock()
         
         # Initialize components
         self.plants: List[Plant] = []
@@ -27,8 +40,8 @@ class Garden:
         )
         
         # Rain system
-        self.rain_center = (random.randint(0, width), 0)
-        self.rain_target = (random.randint(0, width), 0)
+        self.rain_center = (random.randint(0, self.width), 0)
+        self.rain_target = (random.randint(0, self.width), 0)
         self.rain_move_timer = 0
         self.rain_intensity = 0.5
         
@@ -36,7 +49,6 @@ class Garden:
         self.bg_color = (10, 20, 30)
         
         # FPS control
-        self.clock = pygame.time.Clock()
         self.target_fps = 60
         
         # Plant addition control

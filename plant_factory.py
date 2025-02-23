@@ -179,13 +179,13 @@ class Plant:
                 # Get or generate flower size for this branch
                 branch_id = id(branch)
                 if branch_id not in self.flower_sizes:
-                    base_size = 15.0
+                    # Base flower size is proportional to branch thickness
+                    base_size = self.stem_system.properties.thickness * 7.5  # Scale based on stem thickness
                     self.flower_sizes[branch_id] = base_size * (0.8 + 0.4 * random.random())
                 
                 # Draw flower at branch tip
                 flower_pos = branch.end_pos
                 flower_size = self.flower_sizes[branch_id] * self.growth_stage
-                print(f"  Drawing flower at {flower_pos}, size={flower_size:.1f}")
                 self.flower_generator.draw(screen, flower_pos, flower_size, branch.angle)
                 
             # Recursively draw on child branches
