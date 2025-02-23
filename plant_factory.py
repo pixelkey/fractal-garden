@@ -226,20 +226,61 @@ class Plant:
             screen.blit(scientific_surface, (scientific_x, scientific_y))
             
     def _should_place_leaf(self, branch_id: int, leaf_index: int) -> bool:
-        """Determine if a leaf should be placed at this position"""
+        """Determine if a leaf should be placed at this position based on plant type"""
         cache_key = (branch_id, leaf_index)
         if cache_key not in self._leaf_placement_cache:
             # Use branch_id and leaf_index to seed random
             random.seed(hash(cache_key))
-            self._leaf_placement_cache[cache_key] = random.random() < 0.8
+            
+            # Adjust leaf placement probability based on plant type
+            base_probability = {
+                'tree': 0.6,  # Trees have fewer leaves per branch
+                'grass': 0.9,  # Grasses have dense leaf placement
+                'ground_cover': 0.85,
+                'herb': 0.8,
+                'shrub': 0.7,
+                'flower': 0.75
+            }.get(self.definition.type, 0.8)
+            
+            self._leaf_placement_cache[cache_key] = random.random() < base_probability
             random.seed()  # Reset random seed
         return self._leaf_placement_cache[cache_key]
         
     def _draw_leaves_on_branch(self, screen: pygame.Surface, branch: Branch, alpha: int = 255) -> None:
         """Draw leaves along a branch"""
-        if branch.growth < 0.3:  # Only draw leaves on mature enough branches
+        # Check if this is the main stem
+        is_main_stem = branch.start_pos == self.stem_system.main_stem.start_pos
+        
+        # Different maturity thresholds based on plant type and whether it's main stem
+        maturity_thresholds = {
+            'tree': 0.7 if not is_main_stem else 0.9,  # Trees rarely have leaves on main trunk
+            'grass': 0.3,  # Grasses can have leaves early
+            'ground_cover': 0.3,
+            'herb': 0.4,
+            'shrub': 0.5,
+            'flower': 0.4
+        }
+        maturity_threshold = maturity_thresholds.get(self.definition.type, 0.4)
+        
+        if branch.growth < maturity_threshold:
             return
             
+        # Adjust leaf density based on plant type
+        leaf_spacing = {
+            'tree': 25,  # Fewer leaves per branch for trees
+            'grass': 8,   # Dense leaf placement for grasses
+            'ground_cover': 10,
+            'herb': 12,
+            'shrub': 18,
+            'flower': 15
+        }.get(self.definition.type, 15)
+        
+        # Don't place leaves on main stem for certain plant types
+        if is_main_stem and self.definition.type in ['tree', 'shrub']:
+            leaf_spacing *= 2  # Reduce leaf density on main stem
+            if branch.growth < 0.9:  # Only allow leaves on very mature main stems
+                return
+        
         # Get branch vector for leaf orientation
         branch_vector = (
             branch.end_pos[0] - branch.start_pos[0],
@@ -251,7 +292,7 @@ class Plant:
         base_leaf_angle = branch_angle + math.pi/2  # Make leaves perpendicular to branch
         
         # Draw leaves along the branch
-        num_leaves = int(branch.length / 15)  # More leaves per branch
+        num_leaves = int(branch.length / leaf_spacing)  # More leaves per branch
         for i in range(num_leaves):
             if self._should_place_leaf(id(branch), i):
                 # Add some natural variation to position along branch
