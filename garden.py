@@ -108,16 +108,11 @@ class Garden:
         
         # Hills configuration
         self.hills = []
-        num_hills = 5
-        for i in range(num_hills):
-            hill = {
-                'center_x': self.width * (i / (num_hills - 1)),
-                'height': random.uniform(0.2, 0.35) * self.height,
-                'width': random.uniform(1.2, 1.5) * (self.width / (num_hills - 1)),
-                'color': (30, 70, 30)  # Dark green
-            }
-            self.hills.append(hill)
-            
+        self.generate_hills()
+        
+        # Initialize clock
+        self.clock = pygame.time.Clock()
+        
     def _load_plant_definitions(self) -> Dict[str, Any]:
         """Load all plant definitions from the definitions directory"""
         definitions = {}
@@ -430,40 +425,85 @@ class Garden:
             # Blit the cached rain surface
             self.screen.blit(self.rain_surface, (0, 0))
             
-    def _draw_hills(self) -> None:
-        """Draw rolling hills on the horizon"""
-        # Create a surface for the hills
-        hills_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+    def generate_hills(self) -> None:
+        """Generate procedural hills using Perlin noise"""
+        self.hills = []
+        num_hills = random.randint(4, 7)  # Random number of hills
         
-        # Draw each hill as a filled curve
+        # Generate random offsets for variety
+        offsets = []
+        for i in range(num_hills):
+            offset = {
+                'x': random.uniform(-0.2, 0.2),  # Horizontal shift
+                'height': random.uniform(0.15, 0.25),  # Height variation
+                'width': random.uniform(1.2, 1.6),  # Width variation
+                'detail': random.uniform(0.8, 1.2),  # Detail variation
+            }
+            offsets.append(offset)
+        
+        # Sort offsets by height to ensure taller hills are in the back
+        offsets.sort(key=lambda x: x['height'], reverse=True)
+        
+        # Create hills with the offsets
+        for i in range(num_hills):
+            base_x = self.width * (i / (num_hills - 1))
+            hill = {
+                'center_x': base_x + (self.width * offsets[i]['x']),
+                'height': self.height * offsets[i]['height'],
+                'width': (self.width / (num_hills - 1)) * offsets[i]['width'],
+                'detail': offsets[i]['detail'],
+                'color': (
+                    80 + random.randint(-10, 10),
+                    100 + random.randint(-10, 10),
+                    80 + random.randint(-10, 10)
+                )
+            }
+            self.hills.append(hill)
+
+    def _draw_hills(self) -> None:
+        """Draw rolling hills on the horizon using smooth noise"""
+        hills_surface = pygame.Surface((self.width, self.height))
+        hills_surface.fill(self.bg_color)
+        
+        # Draw hills from back to front
         for hill in self.hills:
             points = []
-            # Start from left of the screen to ensure full coverage
-            x = -hill['width'] / 2
-            while x <= self.width + hill['width'] / 2:
-                # Use sine wave for smooth hills
-                distance_from_center = (x - hill['center_x']) / (hill['width'] / 2)
-                y = hill['height'] * math.cos(distance_from_center * math.pi / 2)**2
-                y = self.height - y
+            # Use more points for smoother curves
+            num_points = int(self.width / 5)  # One point every 5 pixels
+            
+            # Generate points with smooth noise
+            for i in range(num_points):
+                x = (i / (num_points - 1)) * (self.width + hill['width'])
+                x -= hill['width'] / 2
+                
+                # Use multiple cosine waves with different frequencies for more natural look
+                distance = (x - hill['center_x']) / (hill['width'] / 2)
+                base_height = math.cos(distance * math.pi / 2)**2
+                detail = math.cos(distance * math.pi * hill['detail'])**2 * 0.2
+                
+                height = (base_height + detail) * hill['height']
+                y = self.height - height
+                
                 points.append((x, y))
-                x += 10  # Step size for curve smoothness
             
-            # Add bottom corners to create a filled polygon
-            points.append((self.width + hill['width'] / 2, self.height))
-            points.append((-hill['width'] / 2, self.height))
+            # Add bottom corners
+            points.append((points[-1][0], self.height))
+            points.append((points[0][0], self.height))
             
-            # Draw the hill
+            # Draw hill
             pygame.draw.polygon(hills_surface, hill['color'], points)
         
-        # Add some darker shading at the base of the hills
-        shade_rect = pygame.Rect(0, int(self.height * 0.8), self.width, int(self.height * 0.2))
-        shade_surface = pygame.Surface((self.width, int(self.height * 0.2)), pygame.SRCALPHA)
-        pygame.draw.rect(shade_surface, (0, 0, 0, 50), shade_surface.get_rect())
-        hills_surface.blit(shade_surface, (0, int(self.height * 0.8)))
+        # Add subtle gradient shading at the base
+        shade_height = int(self.height * 0.2)
+        for i in range(shade_height):
+            shade_alpha = int(20 * (1 - i / shade_height))
+            shade_rect = pygame.Rect(0, self.height - i, self.width, 1)
+            shade_color = (60, 80, 60)
+            if shade_alpha > 0:  # Only draw if visible
+                pygame.draw.rect(hills_surface, shade_color, shade_rect)
         
-        # Draw the hills on the screen
         self.screen.blit(hills_surface, (0, 0))
-
+        
     def draw(self) -> None:
         """Draw all garden elements"""
         # Get time of day and update sky color
@@ -497,8 +537,8 @@ class Garden:
                 star.draw(self.screen)
         
         # Calculate celestial object positions
-        horizon_y = self.height * 0.75  # Horizon line at 75% of screen height
-        max_height = self.height * 0.1  # Maximum height of sun/moon (10% from top)
+        horizon_y = self.height * 0.85  # Lower horizon line (was 0.75)
+        max_height = self.height * 0.15  # Higher max height for more complete hiding (was 0.1)
         
         # Sun position follows a semicircle path
         if day_progress <= 0.8:  # Visible until dusk
@@ -509,6 +549,10 @@ class Garden:
             sun_angle = math.pi * sun_progress
             sun_x = self.width * 0.5 + math.cos(sun_angle) * (self.width * 0.4)
             sun_y = horizon_y - math.sin(sun_angle) * (horizon_y - max_height)
+            
+            # Start sun lower when rising/setting
+            if sun_progress < 0.1 or sun_progress > 0.9:
+                sun_y += self.height * 0.1  # Push it down more at the edges
             
             # Update sun position
             self.sun.x = sun_x
@@ -533,8 +577,12 @@ class Garden:
             else:
                 moon_progress = (day_progress + 0.2) / 0.4
             moon_angle = math.pi * moon_progress
-            moon_x = self.width * 0.5 + math.cos(moon_angle) * (self.width * 0.4)
+            moon_x = self.width/2 + math.cos(moon_angle) * (self.width * 0.4)
             moon_y = horizon_y - math.sin(moon_angle) * (horizon_y - max_height)
+            
+            # Start moon lower when rising/setting
+            if moon_progress < 0.1 or moon_progress > 0.9:
+                moon_y += self.height * 0.1  # Push it down more at the edges
             
             # Update moon position
             self.moon.x = moon_x
@@ -550,7 +598,7 @@ class Garden:
             
             # Draw moon
             self.moon.draw(self.screen)
-
+        
         # Draw hills
         self._draw_hills()
         
