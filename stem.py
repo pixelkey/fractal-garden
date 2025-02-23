@@ -75,10 +75,41 @@ class Branch:
             
         # Draw current branch
         if self.length > 0:
-            pygame.draw.line(surface, color,
-                           (int(self.start_pos[0]), int(self.start_pos[1])),
-                           (int(self.end_pos[0]), int(self.end_pos[1])),
-                           max(1, int(thickness)))
+            # Calculate points for a thicker stem
+            angle = self.angle
+            perp_angle = angle + math.pi/2
+            half_thickness = max(1, thickness/2)
+            
+            # Calculate corner points for the thick line
+            dx_perp = math.cos(perp_angle) * half_thickness
+            dy_perp = -math.sin(perp_angle) * half_thickness
+            
+            points = [
+                (self.start_pos[0] + dx_perp, self.start_pos[1] + dy_perp),
+                (self.end_pos[0] + dx_perp, self.end_pos[1] + dy_perp),
+                (self.end_pos[0] - dx_perp, self.end_pos[1] - dy_perp),
+                (self.start_pos[0] - dx_perp, self.start_pos[1] - dy_perp)
+            ]
+            
+            # Draw the main stem polygon
+            pygame.draw.polygon(surface, color, [(int(x), int(y)) for x, y in points])
+            
+            # Add texture based on appearance
+            texture_points = []
+            num_segments = max(2, int(self.length / 10))
+            for i in range(num_segments):
+                t = i / (num_segments - 1)
+                x = self.start_pos[0] + (self.end_pos[0] - self.start_pos[0]) * t
+                y = self.start_pos[1] + (self.end_pos[1] - self.start_pos[1]) * t
+                # Add slight random variation for texture
+                x += random.uniform(-1, 1) * thickness * 0.1
+                y += random.uniform(-1, 1) * thickness * 0.1
+                texture_points.append((int(x), int(y)))
+            
+            if len(texture_points) > 1:
+                # Draw darker lines for texture
+                darker_color = tuple(max(0, c - 30) for c in color)
+                pygame.draw.lines(surface, darker_color, False, texture_points, max(1, int(thickness * 0.2)))
                            
         # Draw children
         for child in self.children:
@@ -90,7 +121,7 @@ class StemSystem:
     def __init__(self, properties: StemProperties, appearance: StemAppearance):
         self.properties = properties
         self.appearance = appearance
-        self.main_stem = Branch((0, 0), math.pi/2, 100.0)  # Start growing upward
+        self.main_stem = Branch((0, 0), math.pi/2, 300.0)  # Start growing upward, 3x longer
         self.branch_side = 1  # Start with right side
         self.last_branch_height = 0  # Track height of last branch
         self.health = 100.0  # Track health for visual effects
@@ -116,7 +147,7 @@ class StemSystem:
                                        self.properties.branching_variance)
                 branch_angle = base_angle + variance
                 
-                # Add branch with random length variation
+                # Add branch with proportional length variation
                 length_variation = random.uniform(0.4, 0.8)
                 branch_length = self.main_stem.length * length_variation
                 self.main_stem.add_child(branch_angle, branch_length)
