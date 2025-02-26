@@ -5,6 +5,11 @@ from typing import List, Dict, Any
 from plant_factory import PlantFactory, Plant
 from environment import EnvironmentalFactors
 from celestial import Sun, Moon, Star
+from renderer import RendererManager, HAS_OPENGL
+# Import GPU-accelerated celestial objects
+from gpu_celestial import GPUSun, GPUMoon, GPUStar
+# Import GPU plant adapter
+from gpu_plant import GPUPlantAdapter
 import math
 
 class Garden:
@@ -19,8 +24,16 @@ class Garden:
         # Calculate scaling factors for plants based on screen size
         self.scale_factor = min(self.width, self.height) / 1000.0  # Base size of 1000 pixels
         
+        # Initialize the renderer with GPU support if available
+        self.renderer = RendererManager(self.width, self.height, use_gpu=HAS_OPENGL)
+        
+        # Flag to check if we're using GPU rendering
+        self.use_gpu = self.renderer.use_gpu
+        print(f"Using {'GPU' if self.use_gpu else 'CPU'} rendering")
+        
         # Create the window - use resizable flag to handle large dimensions
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        # Note: This is now handled by the renderer, but we keep a reference for backward compatibility
+        self.screen = self.renderer.current_renderer.get_screen_surface()
         pygame.display.set_caption("Fractal Garden")
         
         # Initialize clock
@@ -29,6 +42,7 @@ class Garden:
         # Initialize components
         self.plants: List[Plant] = []
         self.plant_definitions = self._load_plant_definitions()
+        self.plant_factory = PlantFactory()  # Initialize PlantFactory
         
         # Environment state
         self.environment = EnvironmentalFactors(
@@ -53,24 +67,20 @@ class Garden:
         
         # Rain system optimization
         self.rain_drops = []
-        self.rain_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.rain_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
         self.rain_update_counter = 0
         self.drops_per_cloud = 15  # Number of drops to generate per cloud
         
         # Cloud system
         self.clouds = []
         self.max_clouds = 10
-        self.cloud_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.cloud_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
         self.wind_speed = 0.0
         self.target_wind_speed = 0.0
         self.wind_change_timer = 0
         
         # Celestial objects
-        self.sun = Sun(self.width / 2, self.height / 2)
-        self.moon = Moon(self.width / 2, self.height / 2)
-        self.stars = [Star(random.randint(0, self.width), 
-                         random.randint(0, int(self.height * 0.6)))
-                     for _ in range(50)]
+        self._initialize_celestial_objects()
         
         # Background colors for different times of day
         self.sky_colors = {
@@ -162,6 +172,8 @@ class Garden:
                 if self.plant_definitions:
                     definition = random.choice(list(self.plant_definitions.values()))
                     plant = PlantFactory.create_plant(definition, x, y)
+                    if self.use_gpu:
+                        plant = GPUPlantAdapter(plant)
                     self.plants.append(plant)
                     print(f"Added new plant: {plant.definition.species} at ({x}, {y})")
                 return
@@ -425,7 +437,7 @@ class Garden:
                                    start_pos, end_pos, int(drop['size']))
             
             # Blit the cached rain surface
-            self.screen.blit(self.rain_surface, (0, 0))
+            self.renderer.current_renderer.blit(self.rain_surface, (0, 0))
             
     def generate_hills(self) -> None:
         """Generate procedural hills using Perlin noise"""
@@ -464,7 +476,7 @@ class Garden:
 
     def _draw_hills(self) -> None:
         """Draw rolling hills on the horizon using smooth noise"""
-        hills_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        hills_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
         
         # Get time of day to influence hill color
         day_progress = self.current_time / self.day_length
@@ -570,7 +582,7 @@ class Garden:
             shade_rect = pygame.Rect(0, self.height - i, self.width, 1)
             pygame.draw.rect(hills_surface, shade_color, shade_rect)
         
-        self.screen.blit(hills_surface, (0, 0))
+        self.renderer.current_renderer.blit(hills_surface, (0, 0))
         
     def draw(self) -> None:
         """Draw all garden elements"""
@@ -578,8 +590,8 @@ class Garden:
         day_progress = self.current_time / self.day_length
         self._blend_sky_color(day_progress)
         
-        # Fill background
-        self.screen.fill(self.bg_color)
+        # Clear the screen with background color
+        self.renderer.current_renderer.clear(self.bg_color)
         
         # Draw stars during night, dawn, and dusk
         is_transition = day_progress < 0.2 or day_progress > 0.8
@@ -603,7 +615,7 @@ class Garden:
                 star.size = random.uniform(1.5, 3.0)  # Slightly larger stars
                 star.color = (255, 255, 255, star_alpha)  # Pure white with appropriate alpha
                 star.update()  # Update twinkle animation
-                star.draw(self.screen)
+                star.draw(self.renderer.current_renderer)  # Update drawing call
                 
         # Draw celestial objects BEFORE hills so they appear behind them
         # Calculate celestial object positions
@@ -641,7 +653,7 @@ class Garden:
             self.sun.color = (*self.sun.color[:3], sun_alpha)
             
             # Draw sun
-            self.sun.draw(self.screen)
+            self.sun.draw(self.renderer.current_renderer)  # Update drawing call
         
         # Moon position follows opposite semicircle path
         if day_progress >= 0.8 or day_progress <= 0.2:  # Visible from dusk to dawn
@@ -675,7 +687,7 @@ class Garden:
             self.moon.color = (*self.moon.color[:3], moon_alpha)
             
             # Draw moon
-            self.moon.draw(self.screen)
+            self.moon.draw(self.renderer.current_renderer)  # Update drawing call
             
         # Draw hills
         self._draw_hills()
@@ -686,7 +698,10 @@ class Garden:
         
         # Draw plants
         for plant in self.plants:
-            plant.draw(self.screen)
+            if isinstance(plant, GPUPlantAdapter):
+                plant.draw(self.renderer.current_renderer)
+            else:
+                plant.draw(self.renderer.current_renderer.get_screen_surface())
         
         # Draw rain if weather is rainy
         if self.current_weather in ['rain', 'storm']:
@@ -696,8 +711,43 @@ class Garden:
         self._draw_weather_stats()
         
         # Update display
-        pygame.display.flip()
+        self.renderer.current_renderer.present()
         
+    def toggle_renderer(self) -> None:
+        """Toggle between CPU and GPU rendering"""
+        if not HAS_OPENGL:
+            print("GPU rendering is not available")
+            return
+            
+        success = self.renderer.toggle_renderer()
+        self.use_gpu = self.renderer.use_gpu
+        self.screen = self.renderer.current_renderer.get_screen_surface()
+        print(f"Switched to {'GPU' if self.use_gpu else 'CPU'} rendering")
+        
+        # Reinitialize surfaces based on the new renderer
+        self.rain_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
+        self.cloud_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
+        
+        # Reinitialize celestial objects based on rendering mode
+        self._initialize_celestial_objects()
+        
+        # Update plants to use GPU adapter if needed
+        self._update_plants_for_renderer()
+    
+    def _update_plants_for_renderer(self) -> None:
+        """Update plants to use appropriate renderer"""
+        new_plants = []
+        for plant in self.plants:
+            # Check if we need to wrap or unwrap the plant
+            if self.use_gpu and not isinstance(plant, GPUPlantAdapter):
+                # Wrap plant in GPU adapter
+                plant = GPUPlantAdapter(plant)
+            elif not self.use_gpu and isinstance(plant, GPUPlantAdapter):
+                # Unwrap original plant
+                plant = plant.plant
+            new_plants.append(plant)
+        self.plants = new_plants
+
     def _draw_weather_stats(self) -> None:
         """Draw weather statistics in the top-left corner"""
         # Get time of day
@@ -748,8 +798,8 @@ class Garden:
             shadow_surface, text_surface = self._stats_surfaces[cache_key]
             
             # Draw shadow then text
-            self.screen.blit(shadow_surface, (x_offset + 1, y_offset + 1))
-            self.screen.blit(text_surface, (x_offset, y_offset))
+            self.renderer.current_renderer.blit(shadow_surface, (x_offset + 1, y_offset + 1))
+            self.renderer.current_renderer.blit(text_surface, (x_offset, y_offset))
             
             y_offset += line_height
             
@@ -812,7 +862,24 @@ class Garden:
             self.clouds = new_clouds
             
         # Draw the cloud surface
-        self.screen.blit(self.cloud_surface, (0, 0))
+        self.renderer.current_renderer.blit(self.cloud_surface, (0, 0))
+        
+    def _initialize_celestial_objects(self):
+        """Initialize celestial objects based on rendering mode"""
+        if self.use_gpu:
+            # Create GPU-accelerated celestial objects
+            self.sun = GPUSun(self.width / 2, self.height / 2)
+            self.moon = GPUMoon(self.width / 2, self.height / 2)
+            self.stars = [GPUStar(random.randint(0, self.width), 
+                                random.randint(0, int(self.height * 0.6)))
+                         for _ in range(50)]
+        else:
+            # Create standard Pygame celestial objects
+            self.sun = Sun(self.width / 2, self.height / 2)
+            self.moon = Moon(self.width / 2, self.height / 2)
+            self.stars = [Star(random.randint(0, self.width), 
+                             random.randint(0, int(self.height * 0.6)))
+                         for _ in range(50)]
         
     def run(self) -> None:
         """Main game loop"""
@@ -825,6 +892,28 @@ class Garden:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
+                    elif event.key == pygame.K_g:
+                        # Toggle GPU rendering with G key
+                        self.toggle_renderer()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Left mouse button
+                        x, y = event.pos
+                        self.create_random_plant(x, y)
+                elif event.type == pygame.VIDEORESIZE:
+                    # Handle window resize
+                    self.width, self.height = event.size
+                    self.renderer.resize(self.width, self.height)
+                    self.screen = self.renderer.current_renderer.get_screen_surface()
+                    
+                    # Recreate surfaces with new size
+                    self.rain_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
+                    self.cloud_surface = self.renderer.current_renderer.create_surface(self.width, self.height, alpha=True)
+                    
+                    # Regenerate hills for new size
+                    self.generate_hills()
+                    
+                    # Update celestial objects
+                    self._initialize_celestial_objects()
                         
             # Update and draw
             self.update()
@@ -834,3 +923,36 @@ class Garden:
             self.clock.tick(60)
             
         pygame.quit()
+
+    def _create_plant(self, plant_type: str, x: int, y: int) -> None:
+        """Create a new plant at the specified position"""
+        # Randomly select a definition matching the plant type
+        valid_definitions = [d for d in self.plant_definitions.values() 
+                           if d.type.lower() == plant_type.lower()]
+        if not valid_definitions:
+            return
+            
+        definition = random.choice(valid_definitions)
+        
+        # Create a new plant instance
+        plant = self.plant_factory.create_plant(
+            definition, x, y, scale_factor=self.scale_factor
+        )
+        
+        # If using GPU, wrap the plant in the adapter
+        if self.use_gpu:
+            plant = GPUPlantAdapter(plant)
+        
+        self.plants.append(plant)
+        print(f"Added new plant: {definition.common_name} at ({x}, {y})")
+
+    def create_random_plant(self, x: int, y: int) -> None:
+        """Create a random plant at the specified position"""
+        # Default to flower type, with small chances for bushes and trees
+        plant_type = random.choices(
+            ['flower', 'bush', 'tree', 'grass'], 
+            weights=[0.5, 0.2, 0.15, 0.15], 
+            k=1
+        )[0]
+        
+        self._create_plant(plant_type, x, y)

@@ -3,7 +3,7 @@ import random
 import math
 from renderer import Renderer
 
-class CelestialObject:
+class GPUCelestialObject:
     def __init__(self, x: float, y: float, size: float, color: tuple):
         self.x = x
         self.y = y
@@ -26,7 +26,7 @@ class CelestialObject:
             self.is_winking = random.random() < 0.3  # 30% chance to wink
             self.expression_timer = 0
 
-class Sun(CelestialObject):
+class GPUSun(GPUCelestialObject):
     def __init__(self, x: float, y: float):
         # Warm yellow-orange color for the sun
         super().__init__(x, y, 60, (255, 220, 100, 255))
@@ -35,12 +35,12 @@ class Sun(CelestialObject):
         self.glow_size = self.size * 1.5
         
     def draw(self, renderer):
-        """Draw the sun on screen"""
-        # Get screen from the renderer for backward compatibility
+        """Draw the sun using the renderer interface"""
+        # Get renderer's screen (either CPU or GPU)
         screen = renderer.get_screen_surface()
         center = (int(self.x), int(self.y))
         
-        # Draw outer glow directly on screen
+        # Draw outer glow
         for i in range(3):
             glow_size = self.glow_size * (1 + i * 0.5)
             alpha = 100 - i * 30
@@ -49,7 +49,7 @@ class Sun(CelestialObject):
             pygame.draw.circle(glow_surface, glow_color, 
                             (int(glow_size), int(glow_size)), int(glow_size))
             renderer.draw_surface(glow_surface, 
-                               (center[0] - int(glow_size), center[1] - int(glow_size)))
+                            (center[0] - int(glow_size), center[1] - int(glow_size)))
         
         # Draw rays
         for i in range(12):
@@ -84,10 +84,10 @@ class Sun(CelestialObject):
                             (int(self.size * size_factor), int(self.size * size_factor)), 
                             int(self.size * size_factor))
             renderer.draw_surface(sun_circle, 
-                              (center[0] - int(self.size * size_factor), 
-                              center[1] - int(self.size * size_factor)))
+                          (center[0] - int(self.size * size_factor), 
+                           center[1] - int(self.size * size_factor)))
         
-        # Draw happy face
+        # Draw happy face - directly using renderer drawing methods
         if random.random() < 0.95:  # 95% chance to show face
             eye_color = (255, 180, 0, self.color[3])
             mouth_color = (255, 180, 0, self.color[3])
@@ -110,7 +110,7 @@ class Sun(CelestialObject):
                 (center[0] + eye_offset, center[1] - eye_offset),
                 int(eye_size / 2), eye_color)
             
-            # Draw a smile (semicircle)
+            # Smile
             curve_points = []
             for i in range(9):
                 angle = math.pi * i / 8 
@@ -124,10 +124,11 @@ class Sun(CelestialObject):
                     curve_points[i], curve_points[i+1], 
                     mouth_color, 3)
 
-class Moon(CelestialObject):
+class GPUMoon(GPUCelestialObject):
     def __init__(self, x: float, y: float):
-        # Soft blue-white color for the moon - slightly brighter
+        # Soft blue-white color for the moon
         super().__init__(x, y, 50, (200, 205, 220, 255))
+        
         # Generate craters with more random placement
         self.craters = []
         
@@ -160,9 +161,9 @@ class Moon(CelestialObject):
             attempts += 1
         
         self.glow_size = self.size * 1.1  # Glow size
-        
+    
     def draw(self, renderer):
-        """Draw the moon on screen"""
+        """Draw the moon using the renderer interface"""
         center = (int(self.x), int(self.y))
         
         # Draw outer glow
@@ -171,7 +172,7 @@ class Moon(CelestialObject):
         pygame.draw.circle(glow_surface, glow_color, 
                         (int(self.glow_size), int(self.glow_size)), int(self.glow_size))
         renderer.draw_surface(glow_surface, 
-                          (center[0] - int(self.glow_size), center[1] - int(self.glow_size)))
+                      (center[0] - int(self.glow_size), center[1] - int(self.glow_size)))
         
         # Draw main moon circle
         alpha = self.color[3]
@@ -199,9 +200,9 @@ class Moon(CelestialObject):
             pygame.draw.circle(moon_surface, crater_color, crater_pos, crater_radius)
         
         renderer.draw_surface(moon_surface, 
-                          (center[0] - self.size, center[1] - self.size))
+                      (center[0] - self.size, center[1] - self.size))
         
-        # Draw face features
+        # Draw face features directly using renderer methods
         if random.random() < 0.95:  # 95% chance to show face
             eye_color = (160, 165, 180, alpha)
             
@@ -249,14 +250,14 @@ class Moon(CelestialObject):
                 text_surface = font.render(zs, True, eye_color)
                 renderer.draw_surface(text_surface, (text_x, text_y))
 
-class Star(CelestialObject):
+class GPUStar(GPUCelestialObject):
     def __init__(self, x: float, y: float):
         size = random.uniform(2, 4)
         super().__init__(x, y, size, (255, 255, 255, 255))
     
     def draw(self, renderer):
-        """Draw a star on screen"""
-        # Get the current blink state
+        """Draw a star using the renderer interface"""
+        # Make the star twinkle
         current_size = self.size * (0.7 + 0.3 * self.blink_state)
         alpha = int(max(100, 255 * self.blink_state))
         
