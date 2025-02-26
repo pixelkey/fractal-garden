@@ -455,9 +455,9 @@ class Garden:
                 'width': (self.width / (num_hills - 1)) * offsets[i]['width'],
                 'detail': offsets[i]['detail'],
                 'color': (
-                    80 + random.randint(-10, 10),
-                    100 + random.randint(-10, 10),
-                    80 + random.randint(-10, 10)
+                    70 + random.randint(-10, 10),  # Slightly darker base green
+                    90 + random.randint(-10, 10),   # Slightly darker base green
+                    70 + random.randint(-10, 10)    # Slightly darker base green
                 )
             }
             self.hills.append(hill)
@@ -465,6 +465,9 @@ class Garden:
     def _draw_hills(self) -> None:
         """Draw rolling hills on the horizon using smooth noise"""
         hills_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        
+        # Get time of day to influence hill color
+        day_progress = self.current_time / self.day_length
         
         # Draw hills from back to front
         for hill in self.hills:
@@ -491,15 +494,33 @@ class Garden:
             points.append((points[-1][0], self.height))
             points.append((points[0][0], self.height))
             
-            # Draw hill
-            pygame.draw.polygon(hills_surface, hill['color'], points)
+            # Adjust hill color based on sky color
+            base_color = hill['color']
+            sky_influence = 0.3  # How much the sky affects the ground (30%)
+            
+            # Blend hill color with sky color
+            adjusted_color = (
+                int(base_color[0] * (1 - sky_influence) + self.bg_color[0] * sky_influence),
+                int(base_color[1] * (1 - sky_influence) + self.bg_color[1] * sky_influence),
+                int(base_color[2] * (1 - sky_influence) + self.bg_color[2] * sky_influence)
+            )
+            
+            # Draw hill with adjusted color
+            pygame.draw.polygon(hills_surface, adjusted_color, points)
         
         # Add subtle gradient shading at the base
         shade_height = int(self.height * 0.2)
+        # Base shade color influenced by sky color
+        base_shade_color = (
+            max(20, int(self.bg_color[0] * 0.4)),
+            max(20, int(self.bg_color[1] * 0.4)),
+            max(20, int(self.bg_color[2] * 0.4))
+        )
+        
         for i in range(shade_height):
             shade_alpha = int(20 * (1 - i / shade_height))
             shade_rect = pygame.Rect(0, self.height - i, self.width, 1)
-            shade_color = (60, 80, 60)
+            shade_color = base_shade_color
             if shade_alpha > 0:  # Only draw if visible
                 pygame.draw.rect(hills_surface, shade_color, shade_rect)
         

@@ -114,28 +114,36 @@ class Moon(CelestialObject):
     def __init__(self, x: float, y: float):
         # Soft blue-white color for the moon - slightly brighter
         super().__init__(x, y, 50, (200, 205, 220, 255))
-        # Generate craters but avoid the face area
+        # Generate craters with more random placement
         self.craters = []
-        # Define regions for better crater distribution
-        regions = [
-            (-0.4, -0.2, -0.4, -0.2),  # top-left
-            (0.2, 0.4, -0.4, -0.2),    # top-right
-            (-0.4, -0.2, 0.2, 0.4),    # bottom-left
-            (0.2, 0.4, 0.2, 0.4),      # bottom-right
-            (-0.2, 0.2, -0.4, -0.3),   # top-middle
-            (-0.4, -0.25, -0.2, 0.2),  # left-middle
-            (0.25, 0.4, -0.2, 0.2),    # right-middle
-            (-0.2, 0.2, 0.3, 0.4)      # bottom-middle
-        ]
         
-        # Place one crater in each region for even distribution
-        for x_min, x_max, y_min, y_max in regions:
-            cx = random.uniform(x_min, x_max)
-            cy = random.uniform(y_min, y_max)
-            # Still avoid the face area as a safety check
-            face_area = abs(cx) < 0.25 and cy > -0.25 and cy < 0.1
-            if not face_area:
-                self.craters.append((cx, cy, random.uniform(0.08, 0.12)))  # Slightly smaller craters
+        # Create fewer, more randomly placed craters
+        num_craters = 6  # Fewer craters
+        attempts = 0
+        min_distance = 0.25  # Minimum distance between craters
+        
+        while len(self.craters) < num_craters and attempts < 50:
+            cx = random.uniform(-0.45, 0.45)
+            cy = random.uniform(-0.45, 0.45)
+            
+            # Only avoid the direct eye and mouth positions
+            eye_area = (abs(cx - 0.2) < 0.15 and abs(cy + 0.2) < 0.15) or \
+                      (abs(cx + 0.2) < 0.15 and abs(cy + 0.2) < 0.15)
+            mouth_area = abs(cx) < 0.2 and abs(cy - 0.05) < 0.15
+            
+            # Check distance from existing craters
+            too_close = False
+            for existing_cx, existing_cy, _ in self.craters:
+                dist = ((cx - existing_cx) ** 2 + (cy - existing_cy) ** 2) ** 0.5
+                if dist < min_distance:
+                    too_close = True
+                    break
+            
+            if not (eye_area or mouth_area) and not too_close:
+                # Smaller craters
+                self.craters.append((cx, cy, random.uniform(0.06, 0.1)))
+            
+            attempts += 1
         
         self.glow_size = self.size * 1.1  # Glow size
         
@@ -170,8 +178,8 @@ class Moon(CelestialObject):
         # Draw craters with subtle shading
         for cx, cy, cr in self.craters:
             crater_pos = (int(center[0] + cx * self.size), int(center[1] + cy * self.size))
-            # Crater shadow
-            shadow_color = (140, 145, 160, self.color[3])  # Slightly lighter crater shadow
+            # Crater shadow - much darker than the moon face
+            shadow_color = (140, 145, 160, self.color[3])  # Significantly darker than moon face
             crater_shadow = pygame.Surface((int(cr * self.size * 2.2), 
                                          int(cr * self.size * 2.2)), pygame.SRCALPHA)
             pygame.draw.circle(crater_shadow, shadow_color, 
@@ -181,8 +189,8 @@ class Moon(CelestialObject):
                       (crater_pos[0] - int(cr * self.size * 1.1), 
                        crater_pos[1] - int(cr * self.size * 1.1)))
             
-            # Crater highlight
-            highlight_color = (170, 175, 185, self.color[3])  # Slightly brighter highlight
+            # Crater highlight - also darker than the moon face
+            highlight_color = (160, 165, 180, self.color[3])  # Darker than before
             crater_highlight = pygame.Surface((int(cr * self.size * 1.8), 
                                             int(cr * self.size * 1.8)), pygame.SRCALPHA)
             pygame.draw.circle(crater_highlight, highlight_color, 
