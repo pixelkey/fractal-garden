@@ -330,6 +330,8 @@ class Garden:
         moon_angle = angle + math.pi
         moon_x = self.width/2 + math.cos(moon_angle) * orbit_radius_x
         moon_y = orbit_center_y + math.sin(moon_angle) * orbit_radius_y
+        
+        # Update moon position
         self.moon.x = moon_x
         self.moon.y = moon_y
         self.moon.update()
@@ -528,9 +530,11 @@ class Garden:
                     progress = (day_progress - 0.8) / 0.2  # 0.0 at start, 1.0 at end
                 star_alpha = int(255 * progress)
             
-            # Update and draw stars
+            # Update and draw stars - make them bigger and brighter
             for star in self.stars:
-                star.color = (*star.color[:3], star_alpha)
+                # Make stars more visible
+                star.size = random.uniform(1.5, 3.0)  # Slightly larger stars
+                star.color = (255, 255, 255, star_alpha)  # Pure white with appropriate alpha
                 star.update()  # Update twinkle animation
                 star.draw(self.screen)
                 
@@ -549,9 +553,13 @@ class Garden:
             sun_x = self.width * 0.5 + math.cos(sun_angle) * (self.width * 0.4)
             sun_y = horizon_y - math.sin(sun_angle) * (horizon_y - max_height)
             
-            # Start sun lower when rising/setting
-            if sun_progress < 0.1 or sun_progress > 0.9:
-                sun_y += self.height * 0.1  # Push it down more at the edges
+            # Smooth transition near horizon - use a gradual adjustment instead of a sudden jump
+            edge_proximity = min(sun_progress, 1 - sun_progress) * 10  # 0 at edges, 1 when >= 0.1 from edge
+            edge_proximity = max(0, min(1, edge_proximity))  # Clamp between 0 and 1
+            
+            # Apply smooth adjustment - more adjustment when closer to edge
+            horizon_adjustment = self.height * 0.1 * (1 - edge_proximity)
+            sun_y += horizon_adjustment
             
             # Update sun position
             self.sun.x = sun_x
@@ -579,9 +587,13 @@ class Garden:
             moon_x = self.width/2 + math.cos(moon_angle) * (self.width * 0.4)
             moon_y = horizon_y - math.sin(moon_angle) * (horizon_y - max_height)
             
-            # Start moon lower when rising/setting
-            if moon_progress < 0.1 or moon_progress > 0.9:
-                moon_y += self.height * 0.1  # Push it down more at the edges
+            # Smooth transition near horizon - use a gradual adjustment instead of a sudden jump
+            edge_proximity = min(moon_progress, 1 - moon_progress) * 10  # 0 at edges, 1 when >= 0.1 from edge
+            edge_proximity = max(0, min(1, edge_proximity))  # Clamp between 0 and 1
+            
+            # Apply smooth adjustment - more adjustment when closer to edge
+            horizon_adjustment = self.height * 0.1 * (1 - edge_proximity)
+            moon_y += horizon_adjustment
             
             # Update moon position
             self.moon.x = moon_x
