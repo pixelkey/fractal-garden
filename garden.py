@@ -455,9 +455,9 @@ class Garden:
                 'width': (self.width / (num_hills - 1)) * offsets[i]['width'],
                 'detail': offsets[i]['detail'],
                 'color': (
-                    70 + random.randint(-10, 10),  # Slightly darker base green
-                    90 + random.randint(-10, 10),   # Slightly darker base green
-                    70 + random.randint(-10, 10)    # Slightly darker base green
+                    40 + random.randint(-10, 10),   # Lower red component for greener hills
+                    120 + random.randint(-10, 20),  # Higher green component for more vibrant green
+                    40 + random.randint(-10, 10)    # Lower blue component for greener hills
                 )
             }
             self.hills.append(hill)
@@ -468,6 +468,13 @@ class Garden:
         
         # Get time of day to influence hill color
         day_progress = self.current_time / self.day_length
+        
+        # Determine if it's night time (between 0.9 and 0.1)
+        is_night = day_progress > 0.9 or day_progress < 0.1
+        is_twilight = (day_progress > 0.8 and day_progress <= 0.9) or (day_progress >= 0.1 and day_progress < 0.2)
+        
+        # Increase sky influence during night time
+        sky_influence = 0.8 if is_night else (0.6 if is_twilight else 0.4)
         
         # Draw hills from back to front
         for hill in self.hills:
@@ -496,7 +503,6 @@ class Garden:
             
             # Adjust hill color based on sky color
             base_color = hill['color']
-            sky_influence = 0.3  # How much the sky affects the ground (30%)
             
             # Blend hill color with sky color
             adjusted_color = (
@@ -505,24 +511,76 @@ class Garden:
                 int(base_color[2] * (1 - sky_influence) + self.bg_color[2] * sky_influence)
             )
             
+            # Additional darkening at night - much stronger now
+            if is_night:
+                night_factor = 0.3  # Make it much darker
+                adjusted_color = (
+                    int(adjusted_color[0] * night_factor),
+                    int(adjusted_color[1] * night_factor),
+                    int(adjusted_color[2] * night_factor)
+                )
+            elif is_twilight:
+                twilight_factor = 0.5
+                adjusted_color = (
+                    int(adjusted_color[0] * twilight_factor),
+                    int(adjusted_color[1] * twilight_factor),
+                    int(adjusted_color[2] * twilight_factor)
+                )
+            
             # Draw hill with adjusted color
             pygame.draw.polygon(hills_surface, adjusted_color, points)
         
-        # Add subtle gradient shading at the base
-        shade_height = int(self.height * 0.2)
-        # Base shade color influenced by sky color
+        # Add subtle gradient shading at the base (ground)
+        shade_height = int(self.height * 0.2)  # Back to original height
+        
+        # Calculate ground base color - smoothly derived from sky and time of day
+        # More vibrant green during day, darker at night
+        day_factor = 1.0  # Full brightness during day
+        
+        # Smooth transitions for twilight and night
+        if is_night:
+            day_factor = 0.3  # Darkest at night
+        elif is_twilight:
+            if day_progress < 0.2:  # Dawn transition
+                # 0.3 at beginning of dawn, 1.0 at end
+                day_factor = 0.3 + (0.7 * (day_progress - 0.1) / 0.1)
+            else:  # Dusk transition
+                # 1.0 at beginning of dusk, 0.3 at end
+                day_factor = 1.0 - (0.7 * (day_progress - 0.8) / 0.1)
+        
+        # Base ground color with healthy green tint during day
+        green_boost = int(70 * day_factor)  # More green during day
+        red_blue_boost = int(30 * day_factor)  # Less red/blue for more vibrant green
+        
         base_shade_color = (
-            max(20, int(self.bg_color[0] * 0.4)),
-            max(20, int(self.bg_color[1] * 0.4)),
-            max(20, int(self.bg_color[2] * 0.4))
+            max(10, min(50, int(self.bg_color[0] * 0.3) + red_blue_boost)),
+            max(20, min(120, int(self.bg_color[1] * 0.3) + green_boost)),
+            max(10, min(50, int(self.bg_color[2] * 0.3) + red_blue_boost))
         )
         
+        # Draw gradient
         for i in range(shade_height):
-            shade_alpha = int(20 * (1 - i / shade_height))
+            # Calculate progress for smooth gradient (1.0 at bottom, 0.0 at top)
+            progress = 1 - (i / shade_height)
+            
+            # Adjust darkness based on time and position
+            if is_night:
+                dark_factor = 0.4 + (0.6 * progress)  # Darker at bottom
+            elif is_twilight:
+                dark_factor = 0.6 + (0.4 * progress)
+            else:
+                dark_factor = 0.8 + (0.2 * progress)  # Lighter during day
+            
+            # Apply darkness factor - FULLY OPAQUE colors
+            shade_color = (
+                int(base_shade_color[0] * dark_factor),
+                int(base_shade_color[1] * dark_factor),
+                int(base_shade_color[2] * dark_factor)
+            )
+            
+            # Draw gradient line
             shade_rect = pygame.Rect(0, self.height - i, self.width, 1)
-            shade_color = base_shade_color
-            if shade_alpha > 0:  # Only draw if visible
-                pygame.draw.rect(hills_surface, shade_color, shade_rect)
+            pygame.draw.rect(hills_surface, shade_color, shade_rect)
         
         self.screen.blit(hills_surface, (0, 0))
         
