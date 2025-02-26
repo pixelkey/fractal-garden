@@ -462,8 +462,7 @@ class Garden:
 
     def _draw_hills(self) -> None:
         """Draw rolling hills on the horizon using smooth noise"""
-        hills_surface = pygame.Surface((self.width, self.height))
-        hills_surface.fill(self.bg_color)
+        hills_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         
         # Draw hills from back to front
         for hill in self.hills:
@@ -514,7 +513,6 @@ class Garden:
         self.screen.fill(self.bg_color)
         
         # Draw stars during night, dawn, and dusk
-        # Dawn: 0.0-0.2, Dusk: 0.8-1.0
         is_transition = day_progress < 0.2 or day_progress > 0.8
         is_night = day_progress > 0.9 or day_progress < 0.1
         
@@ -535,7 +533,8 @@ class Garden:
                 star.color = (*star.color[:3], star_alpha)
                 star.update()  # Update twinkle animation
                 star.draw(self.screen)
-        
+                
+        # Draw celestial objects BEFORE hills so they appear behind them
         # Calculate celestial object positions
         horizon_y = self.height * 0.85  # Lower horizon line (was 0.75)
         max_height = self.height * 0.15  # Higher max height for more complete hiding (was 0.1)
@@ -598,7 +597,7 @@ class Garden:
             
             # Draw moon
             self.moon.draw(self.screen)
-        
+            
         # Draw hills
         self._draw_hills()
         
