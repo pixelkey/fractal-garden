@@ -105,9 +105,9 @@ class Sun(CelestialObject):
                                 (int(center[0] + eye_offset), int(center[1] - eye_offset)), 
                                 int(eye_size))
             
-            # Smile
-            smile_rect = pygame.Rect(center[0] - self.size * 0.3, center[1] - self.size * 0.1,
-                                   self.size * 0.6, self.size * 0.6)
+            # Smile - move it higher up (less distance from the eyes)
+            smile_rect = pygame.Rect(center[0] - self.size * 0.3, center[1] - self.size * 0.05,
+                                   self.size * 0.6, self.size * 0.4)
             pygame.draw.arc(screen, mouth_color, smile_rect, math.pi, 2 * math.pi, 3)
 
 class Moon(CelestialObject):

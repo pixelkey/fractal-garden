@@ -76,13 +76,13 @@ class Garden:
         self.sky_colors = {
             'night': (10, 20, 40),
             'pre_dawn': (40, 40, 60),
-            'dawn': (255, 150, 100),
-            'sunrise': (255, 200, 150),
+            'dawn': (90, 60, 90),           # Even darker purple/pink
+            'sunrise': (160, 80, 70),       # Darker orange/red
             'morning': (180, 220, 255),
             'day': (135, 206, 235),
             'afternoon': (160, 210, 245),
-            'sunset': (255, 170, 120),
-            'dusk': (150, 120, 180),
+            'sunset': (160, 70, 60),        # Darker red/orange
+            'dusk': (70, 50, 90),           # Darker purple
             'post_dusk': (60, 70, 100)
         }
         self.current_sky_color = self.sky_colors['day']
@@ -723,9 +723,9 @@ class Garden:
                     cloud['height_offset'] = random.uniform(-5, 5)
                 
                 # Draw cloud as a group of circles
-                alpha = 100 if self.current_weather == 'cloudy' else 150
+                alpha = 180 if self.current_weather == 'cloudy' else 220
                 if self.current_weather == 'storm':
-                    alpha = 200
+                    alpha = 240
                 
                 # Draw main cloud body
                 for i in range(5):  # Draw multiple overlapping circles for each cloud
@@ -736,7 +736,7 @@ class Garden:
                     
                     # Add darker bottom for storm clouds
                     if self.current_weather == 'storm':
-                        pygame.draw.circle(self.cloud_surface, (100, 100, 100, 100),
+                        pygame.draw.circle(self.cloud_surface, (100, 100, 100, 180),
                                         (offset_x, offset_y + cloud['size'] * 0.3),
                                         int(cloud['size'] * 0.4))
                 
