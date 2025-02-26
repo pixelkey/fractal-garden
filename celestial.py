@@ -112,11 +112,32 @@ class Sun(CelestialObject):
 
 class Moon(CelestialObject):
     def __init__(self, x: float, y: float):
-        # Soft blue-white color for the moon
-        super().__init__(x, y, 50, (230, 235, 255, 255))
-        self.craters = [(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3), 
-                        random.uniform(0.1, 0.15)) for _ in range(5)]  # More craters
-        self.glow_size = self.size * 1.3
+        # Soft blue-white color for the moon - slightly brighter
+        super().__init__(x, y, 50, (200, 205, 220, 255))
+        # Generate craters but avoid the face area
+        self.craters = []
+        # Define regions for better crater distribution
+        regions = [
+            (-0.4, -0.2, -0.4, -0.2),  # top-left
+            (0.2, 0.4, -0.4, -0.2),    # top-right
+            (-0.4, -0.2, 0.2, 0.4),    # bottom-left
+            (0.2, 0.4, 0.2, 0.4),      # bottom-right
+            (-0.2, 0.2, -0.4, -0.3),   # top-middle
+            (-0.4, -0.25, -0.2, 0.2),  # left-middle
+            (0.25, 0.4, -0.2, 0.2),    # right-middle
+            (-0.2, 0.2, 0.3, 0.4)      # bottom-middle
+        ]
+        
+        # Place one crater in each region for even distribution
+        for x_min, x_max, y_min, y_max in regions:
+            cx = random.uniform(x_min, x_max)
+            cy = random.uniform(y_min, y_max)
+            # Still avoid the face area as a safety check
+            face_area = abs(cx) < 0.25 and cy > -0.25 and cy < 0.1
+            if not face_area:
+                self.craters.append((cx, cy, random.uniform(0.08, 0.12)))  # Slightly smaller craters
+        
+        self.glow_size = self.size * 1.1  # Glow size
         
     def draw(self, screen: pygame.Surface):
         center = (int(self.x), int(self.y))
@@ -124,8 +145,8 @@ class Moon(CelestialObject):
         # Draw outer glow
         for i in range(3):
             glow_size = self.glow_size * (1 + i * 0.3)
-            alpha = 60 - i * 15
-            glow_color = (200, 220, 255, alpha)
+            alpha = 50 - i * 12  # Slightly brighter glow
+            glow_color = (200, 210, 230, alpha)  # Brighter glow color
             glow_surface = pygame.Surface((int(glow_size * 2), int(glow_size * 2)), pygame.SRCALPHA)
             pygame.draw.circle(glow_surface, glow_color, 
                             (int(glow_size), int(glow_size)), int(glow_size))
@@ -135,8 +156,8 @@ class Moon(CelestialObject):
         # Draw main moon circle with slight gradient
         for i in range(2):
             size_factor = 1 - i * 0.1
-            color_bright = 230 - i * 10
-            moon_color = (color_bright, color_bright + 5, color_bright + 20, self.color[3])
+            color_bright = 200 - i * 10  # Brighter surface
+            moon_color = (color_bright, color_bright + 5, color_bright + 15, self.color[3])
             moon_circle = pygame.Surface((int(self.size * 2 * size_factor), 
                                        int(self.size * 2 * size_factor)), pygame.SRCALPHA)
             pygame.draw.circle(moon_circle, moon_color, 
@@ -150,7 +171,7 @@ class Moon(CelestialObject):
         for cx, cy, cr in self.craters:
             crater_pos = (int(center[0] + cx * self.size), int(center[1] + cy * self.size))
             # Crater shadow
-            shadow_color = (200, 205, 225, self.color[3])
+            shadow_color = (140, 145, 160, self.color[3])  # Slightly lighter crater shadow
             crater_shadow = pygame.Surface((int(cr * self.size * 2.2), 
                                          int(cr * self.size * 2.2)), pygame.SRCALPHA)
             pygame.draw.circle(crater_shadow, shadow_color, 
@@ -161,7 +182,7 @@ class Moon(CelestialObject):
                        crater_pos[1] - int(cr * self.size * 1.1)))
             
             # Crater highlight
-            highlight_color = (240, 245, 255, self.color[3])
+            highlight_color = (170, 175, 185, self.color[3])  # Slightly brighter highlight
             crater_highlight = pygame.Surface((int(cr * self.size * 1.8), 
                                             int(cr * self.size * 1.8)), pygame.SRCALPHA)
             pygame.draw.circle(crater_highlight, highlight_color, 
@@ -173,16 +194,16 @@ class Moon(CelestialObject):
         
         # Draw happy face (more subtle than sun)
         if random.random() < 0.95:  # 95% chance to show face
-            eye_color = (180, 185, 205, self.color[3])
-            mouth_color = (180, 185, 205, self.color[3])
+            eye_color = (100, 105, 125, self.color[3])  # Darker, more visible eyes
+            mouth_color = (100, 105, 125, self.color[3])  # Darker, more visible mouth
             
             # Eyes
             eye_offset = self.size * 0.2
-            eye_size = self.size * 0.12  # Slightly smaller eyes
+            eye_size = self.size * 0.13  # Slightly larger eyes
             if self.is_winking:
                 pygame.draw.line(screen, eye_color, 
                               (center[0] - eye_offset, center[1] - eye_offset),
-                              (center[0] - eye_offset + eye_size, center[1] - eye_offset), 2)
+                              (center[0] - eye_offset + eye_size, center[1] - eye_offset), 3)  # Thicker line
                 pygame.draw.circle(screen, eye_color, 
                                 (int(center[0] + eye_offset), int(center[1] - eye_offset)), 
                                 int(eye_size))
@@ -197,7 +218,7 @@ class Moon(CelestialObject):
             # Gentle smile
             smile_rect = pygame.Rect(center[0] - self.size * 0.25, center[1] - self.size * 0.05,
                                    self.size * 0.5, self.size * 0.4)
-            pygame.draw.arc(screen, mouth_color, smile_rect, math.pi, 2 * math.pi, 2)
+            pygame.draw.arc(screen, mouth_color, smile_rect, math.pi, 2 * math.pi, 3)  # Thicker arc
 
 class Star(CelestialObject):
     def __init__(self, x: float, y: float):
